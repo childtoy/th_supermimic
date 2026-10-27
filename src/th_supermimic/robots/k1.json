@@ -1,0 +1,258 @@
+{
+  "robot": "k1",
+  "joint_names": [
+    "left_hip_pitch_joint",
+    "left_hip_roll_joint",
+    "left_hip_yaw_joint",
+    "left_knee_joint",
+    "left_ankle_pitch_joint",
+    "left_ankle_roll_joint",
+    "right_hip_pitch_joint",
+    "right_hip_roll_joint",
+    "right_hip_yaw_joint",
+    "right_knee_joint",
+    "right_ankle_pitch_joint",
+    "right_ankle_roll_joint",
+    "waist_yaw_joint",
+    "left_shoulder_pitch_joint",
+    "left_shoulder_roll_joint",
+    "left_shoulder_yaw_joint",
+    "left_elbow_joint",
+    "left_wrist_roll_joint",
+    "right_shoulder_pitch_joint",
+    "right_shoulder_roll_joint",
+    "right_shoulder_yaw_joint",
+    "right_elbow_joint",
+    "right_wrist_roll_joint"
+  ],
+  "tracked_bodies": [
+    "pelvis",
+    "left_hip_roll_link",
+    "left_knee_link",
+    "left_ankle_roll_link",
+    "right_hip_roll_link",
+    "right_knee_link",
+    "right_ankle_roll_link",
+    "torso_link",
+    "left_shoulder_roll_link",
+    "left_elbow_link",
+    "left_wrist_roll_rubber_hand",
+    "right_shoulder_roll_link",
+    "right_elbow_link",
+    "right_wrist_roll_rubber_hand"
+  ],
+  "root_body": "pelvis",
+  "context_body": "torso_link",
+  "root_height": 0.7955,
+  "default_joint_pos": [
+    -0.29,
+    0.000442,
+    0.00796,
+    0.63,
+    -0.336,
+    0.00258,
+    -0.307,
+    0.00489,
+    0.00546,
+    0.632,
+    -0.326,
+    -0.00029,
+    0.00124,
+    0.202,
+    0.203,
+    -0.00489,
+    0.594,
+    0.00475,
+    0.209,
+    -0.199,
+    0.00793,
+    0.61,
+    -0.00448
+  ],
+  "motors": [
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 76.5,
+      "kd": 4.87,
+      "action_scale": 0.317
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 76.5,
+      "kd": 4.87,
+      "action_scale": 0.317
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 76.5,
+      "kd": 4.87,
+      "action_scale": 0.317
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 76.5,
+      "kd": 4.87,
+      "action_scale": 0.317
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 44.6,
+      "kd": 2.84,
+      "action_scale": 0.265
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 44.6,
+      "kd": 2.84,
+      "action_scale": 0.265
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 76.5,
+      "kd": 4.87,
+      "action_scale": 0.317
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 76.5,
+      "kd": 4.87,
+      "action_scale": 0.317
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 76.5,
+      "kd": 4.87,
+      "action_scale": 0.317
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 76.5,
+      "kd": 4.87,
+      "action_scale": 0.317
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 44.6,
+      "kd": 2.84,
+      "action_scale": 0.265
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 44.6,
+      "kd": 2.84,
+      "action_scale": 0.265
+    },
+    {
+      "effort": 96.864,
+      "velocity": 11.519173,
+      "armature": 0.01936542,
+      "kp": 76.5,
+      "kd": 4.87,
+      "action_scale": 0.317
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    },
+    {
+      "effort": 47.277,
+      "velocity": 20.943951,
+      "armature": 0.00564892,
+      "kp": 22.3,
+      "kd": 1.42,
+      "action_scale": 0.53
+    }
+  ]
+}

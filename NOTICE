@@ -1,0 +1,22 @@
+UniSuperMimic
+Copyright 2026 UniSuperMimic Authors
+
+This repository provides a downstream SuperMimic implementation for UniLab.
+UniLab and UniSim are separate upstream projects licensed under Apache-2.0.
+
+The implementation was developed with reference to the SuperMimic reference
+code in supermimic_vibed, whose MIT license and original copyright notice are
+preserved in LICENSES/MIT-supermimic.txt.
+
+SuperMimic paper:
+"SuperMimic: Scaling Humanoid Whole-Body Control with One Differentiable
+World Model", Qiayuan Liao et al., https://supermimic.github.io
+
+th_supermimic adaptations:
+- K1/G1 per-run robot specifications, dimension-generic MDP and context layouts.
+- RIMKit model preparation, RMAI named-joint import and portable training launcher.
+- K1 PD gains/default positions/action scales reference the local th_beyondmimic
+  K1 configuration. Robot assets are generated from RIMKit and retain vendor
+  license/attribution files. They are excluded from the source archive.
+- SuperMimic-Reproduced was inspected as an independent reference; its reported
+  benchmark results are not results of this repository.

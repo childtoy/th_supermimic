@@ -39,12 +39,10 @@ _PHASE_LABELS = {_PHASE_WM: "WM-only", _PHASE_JOINT: "Joint"}
 
 
 def _device_info_line() -> str:
-    try:
-        from unilab.utils.device import get_device_info_line
-
-        return str(get_device_info_line())
-    except Exception:
-        return ""
+    import platform
+    import torch
+    gpu = torch.cuda.get_device_name() if torch.cuda.is_available() else "CPU"
+    return f"{platform.processor()} | {gpu} | torch {torch.__version__}"
 
 
 def _fmt_time(seconds: float) -> str:

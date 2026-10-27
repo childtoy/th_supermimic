@@ -1,145 +1,157 @@
 # th_supermimic
 
-RMAI로 만든 프리미티브/전환 모션을 K1 또는 G1에서 학습하기 위한
-SuperMimic 파생 구현. 별도 로컬 Git 저장소이며, 원본 두 저장소는 수정하지 않는다.
+K1 / G1 모션 tracking용 SuperMimic 파생 구현. **UniLab, UniSim, mjlab,
+Isaac Lab 없이 MuJoCo 또는 MuJoCo Warp에 직접 연결**한다.
+환경 생성, 상태 읽기/쓰기, reset, 데이터 수집, 평가를 이 레포에서 관리한다.
 
-- 학습 기반: `Uni-SuperMimic`의 world model, replay, BPTT policy/critic learner와 UniLab 환경.
-- 대조 참고: `SuperMimic-Reproduced`의 world-model/FK/학습 구조. 두 구현을 섞어
-  새 알고리즘으로 주장하지 않는다. 정확한 원본 revision은 `UPSTREAM.json`에 기록한다.
-- K1 23관절 / G1 29관절을 **동일 코드에서 선택**한다. 각 로봇의 정책·world model은
-  독립적으로 학습한다. K1 체크포인트를 G1에서 그대로 사용하지 않는다.
-- PPO가 아닌 simulator replay → world model 업데이트 → imagined rollout 역전파 →
-  actor/critic 업데이트 경로를 사용한다.
+- 알고리즘 출처: Uni-SuperMimic의 PyTorch world model / BPTT policy / critic 코드.
+- 참고: SuperMimic-Reproduced의 world-model, FK, reset·학습 구조.
+  해당 레포도 mjlab에 의존하므로 환경 구현은 그대로 가져오지 않았다.
+- 로봇: K1 23관절 / G1 29관절. 로봇별 MJCF·게인·관절 순서만 분리하고 학습기는 공유한다.
+  각 로봇의 정책과 world model은 독립 학습한다.
+- 학습: simulator replay → world model 업데이트 → imagined rollout 역전파 →
+  actor/critic 업데이트. PPO 학습기가 아니다.
+- 원본 revision과 license는 `UPSTREAM.json`, `NOTICE`, `LICENSES/`에 보존한다.
 
-## 현재 검증 범위
+## 설치
 
-- RIMKit의 K1/G1 MJCF에서 position-controlled 학습 모델 생성 및 MuJoCo 로드.
-- 두 로봇의 differentiable FK 위치/회전/선속도/각속도와 MuJoCo 비교.
-- 4-step world-model rollout에서 analytic reward를 거쳐 action까지 gradient 확인.
-- 관절 이름 재정렬, quaternion shortest-path 보간, 50 Hz 모션 변환.
-- 실제 K1 retarget 모션 1개로 CPU MuJoCo 3 iteration 학습, checkpoint 저장·평가 완료.
-- G1은 정적 fixture로 CPU MuJoCo 3 iteration 학습·checkpoint 저장 완료.
-
-이 결과는 실행 검증이며 학습 성능 또는 fidelity 결과가 아니다. 전체 212개 학습,
-GPU mjwarp backend, 서버 드라이버 호환성, 실기 배포는 아직 검증하지 않았다.
-현재 launcher는 한 프로세스/한 learner GPU를 사용한다. 여러 GPU를 쓰려면 우선
-시나리오 또는 로봇별 독립 학습을 분배한다. DDP 학습을 구현했다고 가정하지 않는다.
-
-## 환경
-
-기존 `env_kimodo_inb`를 변경하지 말고 전용 Python 환경을 사용한다.
-UniLab 1.5.1은 `torch>=2.9,<2.15`를 요구하므로 기존 서버의 torch 2.5.1 환경을
-그대로 재사용할 수 없다. CUDA PyTorch 빌드는 서버 드라이버에 맞춰 설치하고
-GPU runtime을 확인해야 한다. Python 3.12 환경을 권장한다.
+**PyTorch 2.5.1에서 실행 검증했다. 2.9 업그레이드는 필요하지 않다.**
+기본 의존성은 PyTorch >=2.5, MuJoCo 3.8.1, NumPy, Rich다.
+GPU 물리는 선택 extra인 MuJoCo Warp 3.8.1 / Warp 1.13.0을 사용한다.
+TensorBoard와 영상 출력도 선택 의존성이다. Python 3.10 이상을 사용한다.
 
 ```bash
-# 별도 Python 3.12 환경을 활성화한 상태
-python -m pip install -e '.[dev]'
+# PyTorch 2.5.1이 이미 있는 환경을 활성화한 뒤, 별도 폴더에 설치 가능
+python -m venv --system-site-packages .venv
+source .venv/bin/activate
+python -m pip install -e '.[warp,logging,dev]'
 ```
 
-주요 의존성은 `pyproject.toml`에 고정/범위 지정되어 있다. CPU backend에는
-MuJoCo 3.11과 mjbatch-uni 0.2.5가 함께 필요하다. local 검증은 별도 `.runtime`
-환경에서 torch 2.10.0, MuJoCo 3.11.0, UniLab 1.5.1, unisim-core 2.1.1,
-mjbatch-uni 0.2.5를 사용했다. 이 환경 폴더는 전송하지 않는다.
+이 명령은 이미 설치된 torch가 >=2.5이면 그 버전을 사용할 수 있다.
+CPU만 쓰려면 `python -m pip install -e '.[dev]'`로 설치한다.
+새 환경에 PyTorch를 직접 설치할 때는 서버 드라이버에 맞는 CUDA build를 사용한다.
+50번 서버의 driver 535에서 Warp 실행은 별도 smoke 검증이 필요하다.
+기존 IsaacLab/Kimodo 환경의 패키지를 직접 덮어쓰지 않는다.
 
-## 1. 로봇 자산 준비
-
-RIMKit 체크아웃에서 정확한 로봇과 mesh를 복사하여 portable MJCF를 만든다.
-K1 게인·기본 자세·action scale은 기존 th_beyondmimic K1 설정에서 가져왔으며,
-G1은 Uni-SuperMimic motor 설정을 사용한다. 기구학은 RIMKit 모델과 맞춘다.
-원본 로봇 license/source 기록도 자산 폴더에 함께 보관한다.
+## 1. 로봇 자산
 
 ```bash
 python tools/prepare_assets.py --rimkit-root /path/to/RIMKit --robot all
 python tools/preflight.py --robot k1 --require-cuda
-python tools/preflight.py --robot g1 --require-cuda
 ```
 
-생성 경로: `assets/k1/`, `assets/g1/`. meshes와 생성 자산은 Git에서 제외한다.
+RIMKit의 원본 기구학과 mesh를 `assets/k1`, `assets/g1`에 복사해
+position-controlled 학습 MJCF로 만든다. K1 게인/기본 자세/action scale은
+기존 th_beyondmimic K1 설정, G1 motor 설정은 Uni-SuperMimic에서 가져왔다.
+로봇 license/source 파일도 함께 복사한다. 생성 자산은 Git에서 제외한다.
 
-## 2. 서버의 RMAI retarget 결과 변환
-
-입력은 `robots/<group>/<motion>/<robot>/final/robot_motion.npz` 구조다.
-`qpos`, `joint_names`, `fps`를 읽고 로봇/관절 이름을 검증한다. 관절 이름이 없으면
-순서를 추측하지 않는다. root는 Z-up, quaternion wxyz인 RIMKit 규약을 사용한다.
-출력 CSV는 root xyz + quaternion xyzw + 선택한 로봇의 관절 순서이며 50 Hz다.
-FK와 body/joint velocity는 학습 모션 라이브러리가 50 Hz에서 계산한다.
+## 2. RMAI corpus 변환
 
 ```bash
 python tools/convert_rmai.py \
   --input-dir /workspace/primitive-motion-corpus/runs/primitive_corpus_05/robots \
   --output-dir data/k1/boxing --robot k1 --groups boxing
 
-# 동일 원본 corpus에 G1 retarget 결과도 있는 경우
 python tools/convert_rmai.py \
   --input-dir /workspace/primitive-motion-corpus/runs/primitive_corpus_05/robots \
   --output-dir data/g1/boxing --robot g1 --groups boxing
 ```
 
-`--groups`를 생략하면 boxing / traffic_control1 / traffic_control2를 모두 변환한다.
-기본 corpus는 boxing 52개, traffic 1 93개, traffic 2 67개로 원본 포함 총 212개다.
-그룹별·로봇별로 다른 출력 폴더를 사용해 입력을 명확히 분리한다.
+입력은 `<group>/<motion>/<robot>/final/robot_motion.npz`다.
+로봇 ID, 관절 이름, qpos layout을 검사하고 순서를 맞춘다. 순서를 추측하지 않는다.
+RIMKit root Z-up/wxyz → CSV Z-up/xyzw로 변환하고 shortest-path quaternion
+보간으로 50 Hz에 맞춘다. FK와 속도는 모션 라이브러리에서 계산한다.
 
-## 3. 실행 검증 후 학습
+`--groups`를 생략하면 세 그룹을 모두 변환한다. 현재 corpus는 원본 포함
+boxing 52개 / traffic_control1 93개 / traffic_control2 67개, 총 212개다.
+manifest의 절대 CSV 경로 대신 clip 이름으로 파일을 찾으므로 변환 폴더를 서버로
+옮겨 사용할 수 있다. G1/K1 및 서로 다른 데이터셋은 출력 폴더를 분리한다.
 
-K1/G1 선택은 **프로세스 시작 시** 고정한다. launcher가 환경 모듈 import 전에
-선택하여 MDP, action, replay, policy, world model의 크기를 함께 맞춘다.
+## 3. 학습
 
 ```bash
-# GPU backend의 짧은 학습 검증: 8 env, 3 iteration, 작은 network
+# 먼저 실제 GPU 물리 + 학습 검증: 8 env, 작은 네트워크, H=4, 3 updates
 CUDA_VISIBLE_DEVICES=0 python tools/train.py \
-  --robot k1 --motion-dir data/k1/boxing --run-dir runs/k1_smoke --smoke
+  --robot k1 --motion-dir data/k1/boxing --run-dir runs/k1_warp_smoke --smoke
 
-# CPU simulator 검증; learner도 CPU에서 실행
-CUDA_VISIBLE_DEVICES='' python tools/train.py \
-  --robot k1 --motion-dir data/k1/boxing --run-dir runs/k1_cpu_smoke \
-  --backend mujoco --smoke
-
-# 실제 학습: 기본값 4096 env, 12000 iteration, H=32
+# 본 학습: 한 learner GPU. 기본 4096 env / 12000 iteration / H=32
 ROBOT=k1 MOTION_DIR=data/k1/boxing GPU_ID=0 RUN_DIR=runs/k1_boxing \
   bash scripts/train_server.sh
 
-# G1도 같은 진입점
+# G1도 같은 코드
 ROBOT=g1 MOTION_DIR=data/g1/boxing GPU_ID=1 RUN_DIR=runs/g1_boxing \
   bash scripts/train_server.sh
+
+# CPU simulator 검증 (Warp 불필요)
+python tools/train.py --robot k1 --motion-dir data/k1/boxing \
+  --run-dir runs/k1_cpu_smoke --backend mujoco --smoke
 ```
 
-Hydra 옵션을 끝에 붙여 조절한다. 예: `algo.num_envs=2048 algo.iterations=20000`.
-`--smoke` checkpoint는 작은 network를 쓰므로 실제 학습의 초기 checkpoint로
-사용하지 않는다. 실제 학습은 별도 run 폴더에서 시작한다.
+설정은 dataclass `SuperMimicConfig`와 JSON 파일로 관리한다. Hydra는 사용하지 않는다.
+`--config file.json`으로 learner 설정을 읽거나 `--num-envs`, `--iterations`,
+`--no-compile`을 지정한다. 세부 설정은 `algo.horizon=32`, `algo.amp=none`,
+`algo.wm_hidden=[1024,1024]`처럼 끝에 붙일 수 있다. 해당 값은 JSON 형식으로 읽는다.
+`--config-only`는 simulator를 만들지 않고 최종 설정을 출력한다.
+`--no-randomization`은 reset noise / encoder offset / friction / torso CoM 변화를 끈다.
 
 ```bash
-# 동일 구조의 학습 재개
+# last.pt의 네트워크 구조·optimizer를 복원하고 총 iteration 수 연장
 python tools/train.py --robot k1 --motion-dir data/k1/boxing \
-  --run-dir runs/k1_boxing algo.resume=true algo.load_run=runs/k1_boxing \
-  algo.iterations=20000
+  --run-dir runs/k1_boxing --resume runs/k1_boxing/last.pt --iterations 20000
 
-# 학습한 설정/구조와 같은 옵션으로 deterministic 전체 clip 평가
+# checkpoint의 구조를 읽어 deterministic 전체 clip 평가
 python tools/train.py --robot k1 --motion-dir data/k1/boxing \
-  --run-dir runs/k1_boxing training.play_only=true algo.load_run=runs/k1_boxing
+  --run-dir runs/k1_boxing --eval --checkpoint runs/k1_boxing/last.pt
 ```
 
-checkpoint는 `ckpt_*.pt`, `last.pt`; TensorBoard와 `metrics.csv`, 원본 config snapshot도
-run 폴더에 저장한다. 학습 success는 원본 reference fidelity와 물리 rollout 평가로
-별도로 판단한다. 런타임 명령 전환/edge 선택은 이 레포 초기 범위에 포함하지 않는다.
+checkpoint에 robot/joint/model/motion hash 계약을 저장하여 잘못된 로봇이나
+데이터로 resume/eval하는 것을 거부한다. 모션·모델·게인을 바꾸면 새 run으로 시작한다.
+종료 직전의 물리 상태를 replay에 저장한 후 해당 env만 자동 reset한다.
+CPU와 Warp가 같은 관측·reward·termination·sampler 코드를 공유한다.
 
-## 테스트
+출력: `last.pt`, `ckpt_*.pt`, `train_log.csv`, `run_config.json`, 선택적 TensorBoard.
+작은 `--smoke` 모델을 본 학습의 초기 checkpoint로 사용하지 않는다.
+원래 UniLab 기반 checkpoint는 새 환경 계약으로 resume하지 않는다.
+
+## 검증과 제한
+
+검증 환경: Python 3.10 / torch 2.5.1+cu124 / MuJoCo 3.8.1 / Warp 1.13.0 /
+MuJoCo Warp 3.8.1, RTX 3080 Ti Laptop, driver 555.42.02.
+
+- 두 로봇의 FK 위치/회전/선속도/각속도와 MuJoCo 수치 비교.
+- analytic reward → 4-step world-model rollout → action까지 gradient 확인.
+- 실제 K1 reference로 직접 GPU Warp의 collector / world model / actor / critic
+  3-update 실행 및 checkpoint 저장 완료.
+- G1은 정적 fixture로 CPU/GPU 경로를 검증한다. 실제 G1 corpus 성능은 미검증.
+- PyTorch 2.5 CPU 학습, checkpoint 재개, K1 평가 경로 검증.
+- K1 GPU에서 H=32/BF16 및 별도 torch.compile 실행 검증.
+- 동일 초기 상태에서 CPU/Warp의 20ms 물리 결과 비교: K1/G1 모두
+  qpos 최대 오차 < 5e-9, qvel 최대 오차 < 3e-7 (해당 초기 상태 기준).
+- reset 전 terminal transition 보존과 다른 env 상태 유지 검사.
+- CPU 학습 테스트는 외부 환경 framework import를 차단한 상태로 실행한다.
 
 ```bash
 python -m pytest tests -q
 ```
 
-준비된 assets가 필요하다. simulator 학습 테스트는 training runtime이 없으면 skip한다.
-G1/K1 FK와 BPTT는 독립 프로세스로 검사하여 한 프로세스에서 robot 설정이 섞이지 않는다.
+GPU physics 비교는 다음으로 재실행할 수 있다.
 
-## 서버로 이동
+```bash
+TH_SUPERMIMIC_ROBOT=k1 python tests/check_backend_parity.py
+TH_SUPERMIMIC_ROBOT=g1 python tests/check_backend_parity.py
+```
 
-`.git`, `.venv`, `.runtime`, `assets`, `data`, `runs`, cache를 제외한 소스 패키지를
-만든다. 압축 해제 후 전용 학습 환경 설치 → 자산 준비 → 이미 서버에 있는 retarget
-결과 변환 → GPU smoke → 본 학습 순서다.
+GPU 검증은 자동 기본 테스트와 별도로 `--backend mjwarp --smoke`로 실행한다.
+첫 실행의 Warp kernel JIT compilation은 시간이 걸릴 수 있다.
+이는 실행 검증이며 모션 fidelity/정책 성능 결과가 아니다. 전체 212개 본 학습,
+4096 env 성능, DDP, 실기 배포와 플레이 명령 전환은 아직 검증/구현 범위 밖이다.
+
+## 서버 전송
 
 ```bash
 bash scripts/package_server.sh /tmp/th_supermimic-server.tar.gz
 ```
 
-license는 Apache-2.0이며 Uni-SuperMimic의 NOTICE와 원 저작권 고지를 보존한다.
+소스·설정·테스트만 묶고 환경·모션·생성 자산·로그는 제외한다.
+서버에서는 자산 준비 → 이미 서버에 있는 retarget 결과 변환 → GPU smoke → 본 학습
+순서로 실행한다. 런타임에 원본 두 참고 레포는 필요하지 않다.

@@ -1,12 +1,12 @@
 {
   "Uni-SuperMimic": {
     "commit": "faf7818e8abac3ec6abb8f00e6e904d3577f800b",
-    "role": "training base",
+    "role": "adapted PyTorch algorithm/math origin; no runtime dependency",
     "url": "https://github.com/Motphys/Uni-SuperMimic"
   },
   "SuperMimic-Reproduced": {
     "commit": "ba6105349069bf040f1fdad60873d13138d505a2",
-    "role": "reference",
+    "role": "reference for world-model, FK and reset semantics; no runtime dependency",
     "url": "https://github.com/CuboiLeo/SuperMimic-Reproduced"
   },
   "RIMKit": {

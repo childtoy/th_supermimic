@@ -1,4 +1,4 @@
-"""Reference G1 motions resampled to 50 Hz with tracked-body forward kinematics."""
+"""Reference humanoid motions resampled to 50 Hz with tracked-body forward kinematics."""
 
 from __future__ import annotations
 

@@ -20,3 +20,9 @@ th_supermimic adaptations:
   license/attribution files. They are excluded from the source archive.
 - SuperMimic-Reproduced was inspected as an independent reference; its reported
   benchmark results are not results of this repository.
+
+Standalone runtime revision:
+- UniLab/UniSim/mjlab runtime dependencies removed. Direct MuJoCo and MuJoCo
+  Warp backends, collector/reset lifecycle, CLI, and checkpoint identity guards
+  are implemented inside th_supermimic.
+- Retained algorithm/math modules preserve their original attribution above.

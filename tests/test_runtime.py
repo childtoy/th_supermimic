@@ -14,7 +14,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 @pytest.mark.parametrize('robot',['k1','g1'])
 def test_simulator_world_model_actor_critic(tmp_path,robot):
-    if not importlib.util.find_spec('unilab') or not importlib.util.find_spec('mjbatch'):
+    if not importlib.util.find_spec('mujoco'):
         pytest.skip('Install training runtime for end-to-end simulator test')
     if not (ROOT/'assets'/robot/'robot.xml').is_file():
         pytest.skip('Prepare robot assets first')
@@ -25,7 +25,7 @@ def test_simulator_world_model_actor_critic(tmp_path,robot):
     np.savetxt(tmp_path/'clip.csv',csv,delimiter=',')
     (tmp_path/'manifest.json').write_text(json.dumps(dict(robot=robot,fps=50,clips=[dict(name='clip',**metadata)])))
     env=dict(os.environ,CUDA_VISIBLE_DEVICES='',OMP_NUM_THREADS='1',MKL_NUM_THREADS='1')
-    result=subprocess.run([sys.executable,str(ROOT/'tools/train.py'),'--robot',robot,
+    result=subprocess.run([sys.executable,str(ROOT/'tests/run_without_frameworks.py'),'--robot',robot,
         '--motion-dir',str(tmp_path),'--backend','mujoco','--run-dir',str(tmp_path/'run'),
         '--smoke'],cwd=ROOT,env=env,capture_output=True,text=True,timeout=90)
     assert result.returncode==0,result.stdout+'\n'+result.stderr

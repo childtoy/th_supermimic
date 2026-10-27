@@ -12,7 +12,7 @@ p.add_argument('--require-cuda', action='store_true')
 a = p.parse_args()
 from th_supermimic.robots import get_robot
 spec = get_robot(a.robot)
-for package in ['torch','mujoco','unilab','unisim-core','mujoco-warp','warp-lang','mjbatch-uni']:
+for package in ['torch','mujoco','mujoco-warp','warp-lang']:
     try: print(f'{package}: {version(package)}')
     except PackageNotFoundError: print(f'{package}: missing')
 import torch

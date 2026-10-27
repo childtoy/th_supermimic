@@ -116,7 +116,7 @@ class MDP:
         context: torch.Tensor,
         frames: torch.Tensor,
     ) -> torch.Tensor:
-        """Return the 99D noise-free proprioceptive observation."""
+        """Return the robot-sized noise-free proprioceptive observation."""
         _, rotation, _, angular_velocity, joint_pos, joint_vel = state
         rotation_t = rotation.transpose(-1, -2)
         default_offset = context[..., 1:1 + NUM_J]

@@ -18,7 +18,7 @@ from th_supermimic.rl.contracts.supermimic import (
     SUPERMIMIC_STATE_KEY,
     SUPERMIMIC_TRANSITION_KEY,
 )
-from th_supermimic.tasks.motion_tracking.humanoid.supermimic.env import SUPPORTED_BACKENDS
+from th_supermimic.sim.backends import SUPPORTED_BACKENDS
 from th_supermimic.tasks.motion_tracking.humanoid.supermimic.evaluate import (
     load_policy,
     make_eval_env,
@@ -26,7 +26,7 @@ from th_supermimic.tasks.motion_tracking.humanoid.supermimic.evaluate import (
 from th_supermimic.tasks.motion_tracking.humanoid.supermimic.mdp import MDP
 
 if TYPE_CHECKING:
-    from th_supermimic.tasks.motion_tracking.humanoid.supermimic.env import SuperMimicManagerBasedRlEnv
+    from th_supermimic.sim.env import TrackingEnv
 
 CONTROL_FPS = 50
 DEFAULT_SCENE = Path(os.environ.get("TH_SUPERMIMIC_ASSETS", "assets/k1")) / "scene.xml"
@@ -46,7 +46,7 @@ def reference_qpos(motion: Any, frames: torch.Tensor) -> torch.Tensor:
 
 @torch.inference_mode()
 def rollout_qpos(
-    env: SuperMimicManagerBasedRlEnv,
+    env: TrackingEnv,
     checkpoint: dict,
     clip_name: str,
     seconds: float,
@@ -250,21 +250,14 @@ def _argument_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
-    from th_supermimic.sim2sim import policy_load_dim_guard
-
     args = _argument_parser().parse_args(argv)
     env = make_eval_env(args.ckpt.parent, backend=args.backend)
     try:
         device = torch.device(env.device)
         checkpoint = torch.load(args.ckpt, map_location=device, weights_only=True)
-        with policy_load_dim_guard(
-            env_obs_dim=env.supermimic_mdp.obs_dim,
-            env_action_dim=env.action_manager.total_action_dim,
-            algo_name="supermimic",
-        ):
-            reference, policy = rollout_qpos(
-                env, checkpoint, args.clip, args.seconds, start=args.start
-            )
+        reference, policy = rollout_qpos(
+            env, checkpoint, args.clip, args.seconds, start=args.start
+        )
         written = render_comparison(
             reference,
             policy,
@@ -279,7 +272,6 @@ def main(argv: list[str] | None = None) -> None:
         print(f"Wrote {written} frames to {args.output}")
     finally:
         env.close()
-        cast(Any, env.backend).close()
 
 
 __all__ = [

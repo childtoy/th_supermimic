@@ -20,11 +20,11 @@ from th_supermimic.rl.contracts.supermimic import (
     SUPERMIMIC_STATE_KEY,
     SUPERMIMIC_TRANSITION_KEY,
 )
-from th_supermimic.tasks.motion_tracking.humanoid.supermimic.env import SUPPORTED_BACKENDS
+from th_supermimic.sim.backends import SUPPORTED_BACKENDS
 from th_supermimic.tasks.motion_tracking.humanoid.supermimic.mdp import MAX_STEP_REWARD, MDP
 
 if TYPE_CHECKING:
-    from th_supermimic.tasks.motion_tracking.humanoid.supermimic.env import SuperMimicManagerBasedRlEnv
+    from th_supermimic.sim.env import TrackingEnv
 
 EVAL_CSV_FIELDS = (
     "iteration",
@@ -39,10 +39,12 @@ EVAL_CSV_FIELDS = (
 
 
 def load_policy(
-    env: SuperMimicManagerBasedRlEnv,
+    env: TrackingEnv,
     checkpoint: dict,
     device: str | torch.device | None = None,
 ) -> networks.Policy:
+    if checkpoint.get("contract") != env.contract:
+        raise ValueError("Checkpoint robot/model/motion contract mismatch")
     mdp = cast(MDP, env.supermimic_mdp)
     device = torch.device(env.device if device is None else device)
     args = checkpoint["args"]
@@ -65,7 +67,7 @@ def load_policy(
 
 @torch.inference_mode()
 def evaluate(
-    env: SuperMimicManagerBasedRlEnv,
+    env: TrackingEnv,
     checkpoint: dict,
     device: str | torch.device | None = None,
 ) -> dict:
@@ -194,7 +196,7 @@ def _append_eval_row(
 
 
 def watch(
-    env: SuperMimicManagerBasedRlEnv,
+    env: TrackingEnv,
     run_dir: str | Path,
     *,
     device: str | torch.device | None = None,
@@ -255,40 +257,13 @@ def watch(
         time.sleep(poll_seconds)
 
 
-def make_eval_env(run_dir: Path, backend: str = "mjwarp") -> SuperMimicManagerBasedRlEnv:
-    from hydra import compose, initialize_config_dir
-    from unilab.base.config_adapter import create_env
-    from unilab.base.process_device import configure_backend_process_device
-    from unilab.training import ensure_registries
-    from unilab.utils.device import get_default_device
-
-    import th_supermimic
-    from th_supermimic.scripts.train_supermimic import build_env_override
-    from th_supermimic.sim2sim import resolve_sim2sim_config
-
-    config_dir = Path(th_supermimic.__file__).resolve().parent / "conf" / "supermimic"
-    overrides = ["training.play_only=true", f"task=humanoid_super_mimic/{backend}", f"robot={ROBOT.name}"]
-    with initialize_config_dir(version_base="1.3", config_dir=str(config_dir)):
-        cfg = compose(config_name="config", overrides=overrides)
-    ensure_registries()
-    resolve_sim2sim_config(
-        run_dir,
-        cfg,
-        algo_name="supermimic",
-        strict=bool(cfg.training.sim2sim_strict),
-    )
-    device = get_default_device()
-    bound_device = configure_backend_process_device(str(cfg.training.sim_backend), device)
-    if bound_device is not None:
-        device = bound_device
-    return cast(
-        "SuperMimicManagerBasedRlEnv",
-        create_env(
-            cfg,
-            num_envs=len(cfg.env.commands.motion.motion_files),
-            env_cfg_override=build_env_override(cfg, eval_mode=True, learner_device=device),
-        ),
-    )
+def make_eval_env(run_dir: Path, backend: str = "mjwarp"):
+    from th_supermimic.sim.env import TrackingEnv
+    config = json.loads((run_dir / 'run_config.json').read_text())
+    if config['robot'] != ROBOT.name:
+        raise ValueError('Select the checkpoint robot before loading the evaluator')
+    return TrackingEnv(config['assets_dir'],config['motion_files'],
+                       num_envs=len(config['motion_files']),backend=backend,eval_mode=True)
 
 
 def _argument_parser() -> argparse.ArgumentParser:
@@ -306,40 +281,20 @@ def _argument_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> None:
-    from th_supermimic.sim2sim import policy_load_dim_guard
-
     args = _argument_parser().parse_args(argv)
     if args.ckpt is None and args.run_dir is None:
-        _argument_parser().error("one of --run_dir or --ckpt is required")
+        _argument_parser().error('one of --run_dir or --ckpt is required')
     run_dir = args.ckpt.parent if args.ckpt is not None else args.run_dir
-    env = make_eval_env(run_dir, backend=args.backend)
+    env = make_eval_env(run_dir,backend=args.backend)
     try:
         if args.ckpt is not None:
-            device = torch.device(env.device)
-            checkpoint = torch.load(args.ckpt, map_location=device, weights_only=True)
-            with policy_load_dim_guard(
-                env_obs_dim=env.supermimic_mdp.obs_dim,
-                env_action_dim=env.action_manager.total_action_dim,
-                algo_name="supermimic",
-            ):
-                result = evaluate(env, checkpoint, device=device)
-            print(
-                json.dumps(
-                    {key: value for key, value in result.items() if key != "per_clip"}, indent=1
-                )
-            )
-            return
-        watch(
-            env,
-            args.run_dir,
-            every=args.every,
-            poll_seconds=args.poll_seconds,
-            success_threshold=args.success_threshold,
-            once=not args.watch,
-        )
+            checkpoint=torch.load(args.ckpt,map_location=env.device,weights_only=True)
+            print(json.dumps(evaluate(env,checkpoint),indent=2))
+        else:
+            watch(env,run_dir,every=args.every,poll_seconds=args.poll_seconds,
+                  success_threshold=args.success_threshold,once=not args.watch)
     finally:
         env.close()
-        cast(Any, env.backend).close()
 
 
 __all__ = ["EVAL_CSV_FIELDS", "evaluate", "load_policy", "main", "make_eval_env", "watch"]

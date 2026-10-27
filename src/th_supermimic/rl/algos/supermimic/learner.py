@@ -12,7 +12,7 @@ from typing import Any, cast
 
 import torch
 import torch.nn as nn
-from unilab.rl.contracts.env import EnvProtocol
+from th_supermimic.rl.contracts.supermimic import EnvProtocol
 
 from th_supermimic.rl.contracts.supermimic import (
     SUPERMIMIC_STATE_KEY,
@@ -538,6 +538,7 @@ class SuperMimicLearner:
             "wall_time": self.wall_time,
             "sim_steps": self.sim_steps,
             "args": asdict(self.cfg),
+            "contract": self.env.contract,
             "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
         if include_optimizers:
@@ -561,6 +562,8 @@ class SuperMimicLearner:
 
     def load(self, path: str | Path) -> None:
         checkpoint = torch.load(path, map_location=self.device, weights_only=True)
+        if checkpoint.get("contract") != self.env.contract:
+            raise ValueError("Checkpoint robot/model/motion contract mismatch")
         required = {"critic", "opt_wm", "opt_pi", "opt_v"}
         missing = sorted(required - checkpoint.keys())
         if missing:

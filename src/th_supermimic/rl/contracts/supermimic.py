@@ -90,3 +90,13 @@ __all__ = [
     "SupportsSuperMimicProtocol",
     "get_supermimic_mdp",
 ]
+
+class EnvProtocol(Protocol):
+    """Small collector boundary owned by this repository."""
+    device: torch.device
+    num_envs: int
+    state: Any
+    supermimic_mdp: SuperMimicMdpProtocol
+
+    def init_state(self) -> Any: ...
+    def step(self, action: torch.Tensor) -> Any: ...

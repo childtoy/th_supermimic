@@ -1,4 +1,4 @@
-"""Torch forward kinematics built from a G1 MJCF on the cold path."""
+"""Torch forward kinematics built from a humanoid MJCF on the cold path."""
 
 from __future__ import annotations
 

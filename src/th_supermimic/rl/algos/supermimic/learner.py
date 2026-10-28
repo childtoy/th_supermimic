@@ -45,6 +45,7 @@ class SuperMimicConfig:
     wm_batch: int = 2048
     pi_batch: int = 4096
     lr: float = 2e-4
+    policy_lr_scale: float = 1.0
     gamma: float = 0.99
     lam: float = 0.95
     action_noise: float = 0.1
@@ -52,6 +53,7 @@ class SuperMimicConfig:
     critic_epochs: int = 5
     critic_minibatches: int = 4
     no_critic: bool = False
+    critic_upper_bound: bool = False
     warmup_steps: int = 64
     wm_only_iters: int = 500
     lr_decay_iters: int = 250_000
@@ -104,6 +106,8 @@ class SuperMimicLearner:
     ):
         if cfg.amp not in ("none", "bf16"):
             raise ValueError(f"amp must be 'none' or 'bf16', got {cfg.amp!r}")
+        if not math.isfinite(cfg.policy_lr_scale) or cfg.policy_lr_scale <= 0:
+            raise ValueError("policy_lr_scale must be finite and positive")
         if cfg.utd <= 0:
             raise ValueError("utd must be positive")
         if cfg.test_hidden_dims is not None and not cfg.test_hidden_dims:
@@ -141,7 +145,7 @@ class SuperMimicLearner:
                 self.device
             )
         self.opt_wm = torch.optim.Adam(self.wm.parameters(), lr=cfg.lr)
-        self.opt_pi = torch.optim.Adam(self.pi.parameters(), lr=cfg.lr, betas=(0.9, 0.95))
+        self.opt_pi = torch.optim.Adam(self.pi.parameters(), lr=cfg.lr * cfg.policy_lr_scale, betas=(0.9, 0.95))
         self.opt_v = torch.optim.Adam(self.critic.parameters(), lr=cfg.lr)
 
         self.buffer = ReplayBuffer(
@@ -167,6 +171,7 @@ class SuperMimicLearner:
         self.sim_steps = 0
         self.wall_time = 0.0
         self.stats = _empty_stats()
+        self.evaluation_best = {}
         self._wm_rollout_fn = self._compile(self._wm_rollout)
         self._wm_err_fn = self._compile(self._wm_err)
         self._imag_step_fn = self._compile(self._imag_step)
@@ -382,6 +387,14 @@ class SuperMimicLearner:
 
         return concatenate(starts), concatenate(histories)
 
+    def _bootstrap_value(self, features: torch.Tensor) -> torch.Tensor:
+        value = self.critic(features)
+        if self.cfg.critic_upper_bound:
+            # Only bootstrap/actor usage is capped. Raw critic predictions are
+            # fitted to bounded targets, retaining gradients above the cap.
+            value = value.clamp(max=self.mdp.max_step_reward / (1 - self.cfg.gamma))
+        return value
+
     def policy_update(
         self,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -444,7 +457,7 @@ class SuperMimicLearner:
             reward_sum = (continuation * rewards).detach().sum(0)
             detached_rewards, detached_dones = rewards.detach(), dones.detach()
             if not self.cfg.no_critic:
-                objective = objective + (self.cfg.gamma**self.cfg.horizon) * survival * self.critic(
+                objective = objective + (self.cfg.gamma**self.cfg.horizon) * survival * self._bootstrap_value(
                     self._critic_input_fn(state, frames, normalized_context, goal)
                 )
             loss = -objective.mean()
@@ -490,7 +503,7 @@ class SuperMimicLearner:
                 ).view(self.cfg.horizon + 1, batch_size, -1)
             self.critic.norm.update(critic_input)
             with torch.no_grad():
-                values = self.critic(critic_input)
+                values = self._bootstrap_value(critic_input)
                 target = values[-1]
                 targets = []
                 for index in range(self.cfg.horizon - 1, -1, -1):
@@ -542,6 +555,7 @@ class SuperMimicLearner:
             "sim_steps": self.sim_steps,
             "args": asdict(self.cfg),
             "contract": self.env.contract,
+            "evaluation_best": self.evaluation_best,
             "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
         if include_optimizers:
@@ -563,6 +577,19 @@ class SuperMimicLearner:
         os.replace(temporary, destination)
         return destination
 
+    def warm_start(self, path: str | Path, allow_motion_transfer: bool = False) -> None:
+        """Import policy/world-model only; optimizer, critic and counters stay fresh."""
+        checkpoint = torch.load(path, map_location=self.device, weights_only=True)
+        source = checkpoint.get("contract")
+        target = self.env.contract
+        if source != target:
+            source_physics = {k: v for k, v in (source or {}).items() if k != "motions"}
+            target_physics = {k: v for k, v in target.items() if k != "motions"}
+            if not allow_motion_transfer or source_physics != target_physics:
+                raise ValueError("Warm-start robot/model/motion contract mismatch")
+        self.wm.load_state_dict(checkpoint["wm"])
+        self.pi.load_state_dict(checkpoint["pi"])
+
     def load(self, path: str | Path) -> None:
         checkpoint = torch.load(path, map_location=self.device, weights_only=True)
         if checkpoint.get("contract") != self.env.contract:
@@ -582,14 +609,43 @@ class SuperMimicLearner:
         self.iteration = checkpoint["iteration"]
         self.wall_time = checkpoint["wall_time"]
         self.sim_steps = checkpoint["sim_steps"]
+        self.evaluation_best = checkpoint.get("evaluation_best", {})
 
     @staticmethod
     def _mean(values: list[torch.Tensor]) -> float:
         return float(sum(float(value) for value in values) / max(len(values), 1))
 
-    def train(self, resume: str | Path | None = None) -> dict[str, float | int | bool]:
+    def _periodic_evaluation(self, callback) -> None:
+        devices = [self.device.index or 0] if self.device.type == "cuda" else []
+        # Evaluator initialization must not consume the training RNG stream.
+        with torch.random.fork_rng(devices=devices):
+            result = callback(self._checkpoint(include_optimizers=False))
+        destination = self.log_dir / "evals" / f"eval_{self.iteration:06d}.json"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        temporary = destination.with_suffix(".tmp")
+        temporary.write_text(json.dumps(result, indent=2) + "\n")
+        temporary.replace(destination)
+        coverage = (-int(result["n_failed"]), float(result["norm_return"]))
+        reward = float(result["norm_return"])
+        better_return = reward > self.evaluation_best.get("return", -float("inf"))
+        better_coverage = coverage > tuple(self.evaluation_best.get("coverage", [-float("inf"), -float("inf")]))
+        if better_return:
+            self.evaluation_best["return"] = reward
+        if better_coverage:
+            self.evaluation_best["coverage"] = coverage
+        if better_return:
+            self.save(self.log_dir / "best_return.pt")
+        if better_coverage:
+            self.save(self.log_dir / "best_coverage.pt")
+        print(f"[eval {self.iteration}] return={reward:.4f} failed={result['n_failed']}", flush=True)
+
+    def train(self, resume: str | Path | None = None, evaluation_callback=None,
+              evaluation_interval: int = 0) -> dict[str, float | int | bool]:
         if resume is not None:
             self.load(resume)
+            if Path(resume).resolve().parent != self.log_dir.resolve():
+                # A new output directory starts its own evaluation series.
+                self.evaluation_best = {}
         start_iteration = self.iteration
         self.stats = _empty_stats()
         logger = SuperMimicLogger(
@@ -604,6 +660,8 @@ class SuperMimicLearner:
         )
         logger.start(status="Warming up...")
         try:
+            if evaluation_callback is not None and evaluation_interval > 0:
+                self._periodic_evaluation(evaluation_callback)
             if start_iteration == 0:
                 self.collect(self.cfg.warmup_steps)
             required_steps = max(self.cfg.hist, self.cfg.wm_window)
@@ -615,8 +673,9 @@ class SuperMimicLearner:
             logger.start_training_timer()
 
             log_path = self.log_dir / "train_log.csv"
+            write_header = not log_path.exists() or log_path.stat().st_size == 0
             with log_path.open("a", encoding="utf-8", newline="") as log_file:
-                if start_iteration == 0:
+                if write_header:
                     log_file.write(",".join(_LOG_FIELDS) + "\n")
                 train_start = time.time() - self.wall_time
                 log_start = time.time()
@@ -632,9 +691,9 @@ class SuperMimicLearner:
                         logger.log_status("Compiling policy update (one-off, slow on first run)")
                     iteration_start = time.time()
                     learning_rate = self.lr_at(iteration)
-                    for optimizer in (self.opt_wm, self.opt_pi, self.opt_v):
+                    for optimizer, scale in ((self.opt_wm, 1.0), (self.opt_pi, self.cfg.policy_lr_scale), (self.opt_v, 1.0)):
                         for group in optimizer.param_groups:
-                            group["lr"] = learning_rate
+                            group["lr"] = learning_rate * scale
                     step_accumulator += 1.0 / self.cfg.utd
                     collect_steps = int(step_accumulator)
                     step_accumulator -= collect_steps
@@ -737,6 +796,12 @@ class SuperMimicLearner:
                         last_metrics = dict(zip(_LOG_FIELDS, row, strict=True))
                         self.stats = _empty_stats()
                         aggregate = {key: [] for key in aggregate}
+
+                    if evaluation_callback is not None and evaluation_interval > 0 and (
+                        self.iteration % evaluation_interval == 0 or self.iteration == self.cfg.iterations
+                    ):
+                        self._periodic_evaluation(evaluation_callback)
+                        self.wall_time = time.time() - train_start
 
                     if (
                         self.iteration % self.cfg.ckpt_every == 0

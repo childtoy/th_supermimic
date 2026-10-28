@@ -25,7 +25,7 @@ def inspect(env,ckpt,mode,output):
     wm=networks.WorldModel(hidden=args['wm_hidden'],num_joints=mdp.num_joints,context_dim=mdp.context_dim).to(env.device)
     wm.load_state_dict(ckpt['wm']);wm.eval()
     critic=None
-    if 'critic' in ckpt:
+    if 'critic' in ckpt and not args.get('no_critic',False):
         critic=networks.Critic(ckpt['critic']['norm.mean'].numel(),hidden=args['critic_hidden']).to(env.device)
         critic.load_state_dict(ckpt['critic']);critic.eval()
     env.reset_to_frames(lib.clip_start.clone())

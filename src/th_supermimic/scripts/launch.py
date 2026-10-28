@@ -16,9 +16,12 @@ def main():
     p.add_argument('--backend',choices=['mjwarp','mujoco'],default='mjwarp')
     p.add_argument('--run-dir',type=Path,required=True)
     p.add_argument('--num-envs',type=int,default=4096)
+    p.add_argument('--eval-every',type=int,default=0,help='Periodic full-reference evaluation and best-checkpoint retention')
     p.add_argument('--iterations',type=int)
     p.add_argument('--config',type=Path,help='JSON containing SuperMimicConfig fields')
     p.add_argument('--resume',type=Path)
+    p.add_argument('--warm-start',type=Path,help='Policy/world-model import with fresh critic and optimizers')
+    p.add_argument('--allow-motion-transfer',action='store_true',help='Warm-start across datasets of the same physical robot only')
     p.add_argument('--eval',action='store_true')
     p.add_argument('--checkpoint',type=Path)
     p.add_argument('--smoke',action='store_true')
@@ -26,6 +29,10 @@ def main():
     p.add_argument('--no-randomization',action='store_true')
     p.add_argument('--config-only',action='store_true')
     a,overrides=p.parse_known_args()
+    if a.allow_motion_transfer and not a.warm_start:
+        p.error('--allow-motion-transfer requires --warm-start')
+    if a.warm_start and (a.resume or a.eval):
+        p.error('--warm-start cannot be combined with --resume or --eval')
     assets=(a.assets_dir or Path('assets')/a.robot).resolve()
     os.environ['TH_SUPERMIMIC_ROBOT']=a.robot
     os.environ['TH_SUPERMIMIC_ASSETS']=str(assets)
@@ -46,8 +53,9 @@ def main():
     from th_supermimic.sim.env import TrackingEnv
     checkpoint=a.resume or (a.checkpoint or a.run_dir/'last.pt' if a.eval else None)
     values={'iterations':12000}
-    if checkpoint:
-        values.update(torch.load(checkpoint,map_location='cpu',weights_only=True)['args'])
+    initialization = checkpoint or a.warm_start
+    if initialization:
+        values.update(torch.load(initialization,map_location='cpu',weights_only=True)['args'])
     if a.config:
         values.update(json.loads(a.config.read_text()))
     if a.smoke:
@@ -75,10 +83,14 @@ def main():
         if values.get(key) is not None:
             values[key]=tuple(values[key])
     cfg=SuperMimicConfig(**values)
+    if a.eval_every < 0:
+        p.error("--eval-every must be nonnegative")
     if cfg.iterations<1 or a.num_envs<1 or not 0<cfg.gamma<1:
         p.error('iterations/env count must be positive and 0 < gamma < 1')
     snapshot=dict(schema=2,robot=a.robot,backend=a.backend,assets_dir=str(assets),
-                  motion_files=[str(x) for x in files],learner=asdict(cfg))
+                  motion_files=[str(x) for x in files],learner=asdict(cfg),
+                  warm_start=str(a.warm_start.resolve()) if a.warm_start else None,
+                  allow_motion_transfer=a.allow_motion_transfer,evaluation_interval=a.eval_every)
     if a.config_only:
         print(json.dumps(snapshot,indent=2));return
     if not a.resume and not a.eval and (a.run_dir/'last.pt').exists():
@@ -87,6 +99,7 @@ def main():
     env=TrackingEnv(assets,[str(x) for x in files],num_envs=len(files) if a.eval else a.num_envs,
                     backend=a.backend,eval_mode=a.eval,gamma=cfg.gamma,seed=cfg.seed,
                     randomization=not a.no_randomization)
+    evaluation_env = None
     try:
         if a.eval:
             from th_supermimic.tasks.motion_tracking.humanoid.supermimic.evaluate import evaluate
@@ -98,8 +111,21 @@ def main():
         a.run_dir.mkdir(parents=True,exist_ok=True)
         (a.run_dir/'run_config.json').write_text(json.dumps(snapshot,indent=2)+'\n')
         learner=SuperMimicLearner(env,cfg,a.run_dir,device=env.device,backend=a.backend)
-        print(json.dumps(learner.train(resume=a.resume),indent=2))
+        if a.warm_start:
+            learner.warm_start(a.warm_start,allow_motion_transfer=a.allow_motion_transfer)
+        def evaluate_checkpoint(saved):
+            nonlocal evaluation_env
+            from th_supermimic.tasks.motion_tracking.humanoid.supermimic.evaluate import evaluate
+            if evaluation_env is None:
+                evaluation_env=TrackingEnv(assets,[str(x) for x in files],num_envs=len(files),
+                                          backend=a.backend,eval_mode=True,randomization=False)
+            return evaluate(evaluation_env,saved)
+        print(json.dumps(learner.train(resume=a.resume,
+                         evaluation_callback=evaluate_checkpoint if a.eval_every > 0 else None,
+                         evaluation_interval=a.eval_every),indent=2))
     finally:
+        if evaluation_env is not None:
+            evaluation_env.close()
         env.close()
 
 

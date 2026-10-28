@@ -32,3 +32,31 @@ def test_simulator_world_model_actor_critic(tmp_path,robot):
     assert (tmp_path/'run/ckpt_000003.pt').is_file()
     assert '"completed": true' in result.stdout
     assert '"pi_gradnorm":' in result.stdout
+
+    warm=subprocess.run([sys.executable,str(ROOT/'tests/run_without_frameworks.py'),'--robot',robot,
+        '--motion-dir',str(tmp_path),'--backend','mujoco','--run-dir',str(tmp_path/'warm'),
+        '--warm-start',str(tmp_path/'run/ckpt_000003.pt'),'--smoke','--eval-every','1',
+        'algo.critic_upper_bound=true','algo.policy_lr_scale=0.25'],cwd=ROOT,env=env,capture_output=True,text=True,timeout=90)
+    assert warm.returncode==0,warm.stdout+'\n'+warm.stderr
+    assert (tmp_path/'warm/ckpt_000003.pt').is_file()
+    snapshot=json.loads((tmp_path/'warm/run_config.json').read_text())
+    assert snapshot['warm_start']==str((tmp_path/'run/ckpt_000003.pt').resolve())
+    assert snapshot['learner']['critic_upper_bound'] is True
+
+    assert (tmp_path/'warm/best_return.pt').is_file()
+    assert (tmp_path/'warm/best_coverage.pt').is_file()
+    assert len(list((tmp_path/'warm/evals').glob('eval_*.json')))==4
+
+    import torch
+    full=torch.load(tmp_path/'warm/last.pt',map_location='cpu',weights_only=True)
+    assert full['opt_pi']['param_groups'][0]['lr']==pytest.approx(full['opt_wm']['param_groups'][0]['lr']*.25)
+
+    resumed=subprocess.run([sys.executable,str(ROOT/'tests/run_without_frameworks.py'),'--robot',robot,
+        '--motion-dir',str(tmp_path),'--backend','mujoco','--run-dir',str(tmp_path/'resumed'),
+        '--resume',str(tmp_path/'warm/last.pt'),'--num-envs','8','--iterations','4',
+        '--eval-every','1'],cwd=ROOT,env=env,capture_output=True,text=True,timeout=90)
+    assert resumed.returncode==0,resumed.stdout+'\n'+resumed.stderr
+    assert (tmp_path/'resumed/train_log.csv').read_text().startswith('iteration,')
+    assert (tmp_path/'resumed/best_return.pt').is_file()
+    assert (tmp_path/'resumed/evals/eval_000003.json').is_file()
+    assert (tmp_path/'resumed/ckpt_000004.pt').is_file()

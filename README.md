@@ -237,3 +237,23 @@ GPU_ID=0 bash scripts/boxing_transfer_recipe.sh
 두 번째는 `algo.policy_lr_scale=0.25`로 policy만 5e-5로 낮춘다. WM/critic LR은 유지한다.
 256 env, 300+500 updates인 작은 실험이며 장기·여러 seed·서버 재현 전에는 확정된
 최적 설정으로 해석하지 않는다. 기존의 학습 모션과 물리 모델을 그대로 사용한다.
+
+## 새 full sequence 재생 (재학습 없음)
+
+RIMKit으로 리타게팅한 `robot_motion.npz`를 직접 입력한다. 사람 SOMA motion은 먼저
+선택 로봇으로 리타게팅해야 한다. 학습에 사용한 assets와 checkpoint를 지정한다.
+
+```bash
+python tools/play.py --robot k1 \
+  --checkpoint runs/k1_traffic_control2/last.pt --assets-dir assets/k1 \
+  --input /path/to/full_sequences/*/k1/final/robot_motion.npz \
+  --output-dir runs/traffic_v2_full_play --video traffic_v5_final_01
+```
+
+50Hz 변환본과 manifest, 전체 clip 평가 결과 `evaluation.json`, 선택 clip의
+reference/rollout NPZ 및 MP4를 저장한다. `--video all`은 전부 렌더링한다.
+영상의 실체는 policy, 파란 ghost는 reference이며 조기 종료 시 영상도 종료된다.
+기존 결과를 덮어쓰지 않도록 새 output 디렉터리를 사용한다.
+새 reference 집합만 허용하며 robot/joint/schema/model hash 불일치는 거부한다.
+이 예외는 별도 inference 명령에만 적용하고 기존 학습·resume·평가 검사는 유지한다.
+checkpoint와 원본 모션은 수정하지 않는다.

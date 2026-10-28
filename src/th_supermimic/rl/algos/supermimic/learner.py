@@ -48,6 +48,7 @@ class SuperMimicConfig:
     gamma: float = 0.99
     lam: float = 0.95
     action_noise: float = 0.1
+    action_limit: float = 20.0
     critic_epochs: int = 5
     critic_minibatches: int = 4
     no_critic: bool = False
@@ -202,6 +203,7 @@ class SuperMimicLearner:
             z_dim=self.cfg.z_dim,
             num_joints=self.mdp.num_joints,
             hidden=self.cfg.policy_hidden,
+            action_limit=self.cfg.action_limit,
         )
         if self.cfg.test_hidden_dims is not None:
             enc_output = policy.enc[-1]
@@ -321,7 +323,8 @@ class SuperMimicLearner:
             self.pi.obs_norm.update(obs)
             self.pi.goal_norm.update(goal)
             action = self.pi(self.obs_hist, goal)
-            action = torch.clamp(action + self.cfg.action_noise * torch.randn_like(action), -20, 20)
+            action = torch.clamp(action + self.cfg.action_noise * torch.randn_like(action),
+                                 -self.cfg.action_limit, self.cfg.action_limit)
             if self._bridged:
                 step_state = self.env.step(action.to(self.env_device))
             else:

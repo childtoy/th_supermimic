@@ -203,8 +203,12 @@ class Policy(nn.Module):
         *,
         num_joints: int,
         hidden: Sequence[int] = (2048, 1024, 512, 256),
+        action_limit: float = 20.0,
     ):
         super().__init__()
+        if action_limit <= 0:
+            raise ValueError("action_limit must be positive")
+        self.action_limit = float(action_limit)
         self.hist = hist
         self.enc = mlp(goal_dim, hidden, z_dim)
         self.dec = mlp(z_dim + obs_dim * hist, hidden, num_joints)
@@ -220,7 +224,8 @@ class Policy(nn.Module):
         """Consume ``(batch, hist, obs_dim)`` observations, newest last."""
         latent = torch.tanh(run_mlp(self.enc, self.goal_norm(goal)))
         obs = self.obs_norm(obs_hist).flatten(-2)
-        return run_mlp(self.dec, torch.cat((latent, obs), -1))
+        action = run_mlp(self.dec, torch.cat((latent, obs), -1))
+        return action.clamp(-self.action_limit, self.action_limit)
 
 
 class Critic(nn.Module):

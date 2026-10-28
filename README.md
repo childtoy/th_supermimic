@@ -155,3 +155,22 @@ bash scripts/package_server.sh /tmp/th_supermimic-server.tar.gz
 소스·설정·테스트만 묶고 환경·모션·생성 자산·로그는 제외한다.
 서버에서는 자산 준비 → 이미 서버에 있는 retarget 결과 변환 → GPU smoke → 본 학습
 순서로 실행한다. 런타임에 원본 두 참고 레포는 필요하지 않다.
+
+## 학습 붕괴 조사와 기존 checkpoint 비교
+
+TensorBoard의 step reward, completed-episode return, imagined return은 서로
+다른 표본/가중치의 통계이므로 같은 값으로 해석하지 않는다. 전용 policy도
+학습 후 critic/gradient가 불안정해질 수 있으므로 마지막 checkpoint만 평가하지 않는다.
+
+```bash
+GPU_ID=0 bash scripts/evaluate_checkpoints.sh
+```
+
+각 run의 2,000회 checkpoint와 last.pt를 전체 clip의 첫 프레임부터 평가하고
+`*_eval.json`에 결과를 저장한다. model weights는 변경하지 않는다.
+
+2026-10-28 수정: 기존 collector에는 action ±20 제한이 있었지만 imagined
+rollout와 evaluator에는 제한이 없었다. 이제 policy 출력에서 공통으로 제한한다.
+기존 state_dict는 로드할 수 있으며 기존 checkpoint 평가에도 collector와 같은
+제한이 적용된다. 이 수정이 Boxing 붕괴의 주원인 또는 해결책인지는 아직
+장기 학습/비교 실험으로 검증하지 않았다. 기존 checkpoint를 보존한 뒤 평가한다.

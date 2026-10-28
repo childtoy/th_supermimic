@@ -59,6 +59,7 @@ def load_policy(
         z_dim=int(args["z_dim"]),
         num_joints=mdp.num_joints,
         hidden=tuple(hidden),
+        action_limit=float(args.get("action_limit", 20.0)),
     ).to(device)
     policy.load_state_dict(checkpoint["pi"])
     policy.eval()

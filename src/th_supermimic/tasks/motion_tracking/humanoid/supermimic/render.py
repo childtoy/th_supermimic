@@ -197,6 +197,7 @@ def render_comparison(
     height: int = 540,
     fps: int = 25,
     global_ghost: bool = False,
+    frame_labels: list[str] | None = None,
 ) -> int:
     import imageio.v2 as imageio
     import mujoco
@@ -208,6 +209,8 @@ def render_comparison(
         raise ValueError("output must be an .mp4 path")
     if fps <= 0 or CONTROL_FPS % fps != 0:
         raise ValueError(f"fps must be a positive divisor of {CONTROL_FPS}")
+    if frame_labels is not None and len(frame_labels) != len(reference):
+        raise ValueError("frame_labels must match rollout frames")
     model = load_comparison_model(scene)
     if reference.shape[1] * 2 != model.nq:
         raise ValueError(f"comparison model expects {model.nq // 2} qpos columns")
@@ -242,7 +245,8 @@ def render_comparison(
                 mujoco.mj_kinematics(model, data)
                 camera.lookat[:] = [policy[index, 0], policy[index, 1], 0.75]
                 renderer.update_scene(data, camera=camera)
-                label = f"{clip_name}  t={index / CONTROL_FPS:4.1f}s"
+                title = frame_labels[index] if frame_labels is not None else clip_name
+                label = f"{title}  t={index / CONTROL_FPS:4.1f}s"
                 writer.append_data(make_comparison_frame(renderer.render(), label))
                 written += 1
     finally:

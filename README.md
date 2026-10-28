@@ -257,3 +257,24 @@ reference/rollout NPZ 및 MP4를 저장한다. `--video all`은 전부 렌더링
 새 reference 집합만 허용하며 robot/joint/schema/model hash 불일치는 거부한다.
 이 예외는 별도 inference 명령에만 적용하고 기존 학습·resume·평가 검사는 유지한다.
 checkpoint와 원본 모션은 수정하지 않는다.
+
+## 준비된 pair bank에서 명령으로 연속 전환
+
+```bash
+python tools/command_demo.py --robot k1 \
+  --checkpoint runs/k1_traffic_control2/last.pt \
+  --motion-dir data/k1/traffic_control2 --assets-dir assets/k1 \
+  --output-dir runs/traffic_v2_commands10 --switches 10 --seed 42
+```
+
+학습 당시 pair CSV/manifest를 그대로 사용한다. 각 primitive 재생 0.55~1.15초에
+다른 모션 명령을 생성하고 현재 시점과 가장 가까운 pair를 골라 bridge 직전으로
+reference를 즉시 바꾼다. XY/yaw는 직전 reference에 정렬하고 높이는 유지한다.
+물리 상태·이전 action·policy history를 재설정하지 않으며 별도 블렌딩도 없다.
+`commands.json`에 선택한 edge, 시점 차이, bridge 길이와 종료 상태를 기록한다.
+`commands.mp4`에는 명령 번호와 현재 전이/재생 상태를 표시한다.
+
+이 명령은 키보드 UI가 아닌 자동 명령 실험이다. 전이 도중 추가 명령은 이번 실험에서
+발생시키지 않는다. 즉시 reference 교체는 즉시 target pose 도달과 다르며, 목표 모션
+진입까지 선택한 bridge 시간이 필요하다. 조기 종료하면 실패 상태와 해당 시점까지만
+저장하므로 생성된 영상 길이만으로 성공을 판단하지 않는다.

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import copy
+import xml.etree.ElementTree as ET
 import os
 import re
 import tempfile
@@ -102,15 +104,34 @@ def rollout_qpos(
 
 
 def comparison_xml(scene: Path) -> str:
-    xml = scene.read_text(encoding="utf-8")
-    robot_xml = scene.with_name("supermimic.xml").read_text(encoding="utf-8")
-    body = robot_xml[robot_xml.index('<body name="pelvis"') : robot_xml.index("</worldbody>")]
-    ghost = re.sub(r' name="([^"]+)"', r' name="ref_\1"', body)
-    ghost = re.sub(r'rgba="[^"]*"', 'rgba="0.35 0.65 1.0 0.25"', ghost)
-    ghost = re.sub(r' (contype|conaffinity|group)="[^"]*"', "", ghost)
-    ghost = ghost.replace("<geom ", '<geom contype="0" conaffinity="0" group="1" ')
-    xml = xml.replace("</worldbody>", ghost + "</worldbody>")
-    return re.sub(r"\s*<keyframe>.*?</keyframe>", "", xml, flags=re.DOTALL)
+    """Add a non-colliding reference to the portable, self-contained MJCF."""
+    root = ET.fromstring(scene.read_text(encoding="utf-8"))
+    world = root.find('worldbody')
+    if world is None:
+        raise ValueError('Scene has no worldbody')
+    pelvis = world.find("body[@name='pelvis']")
+    if pelvis is None:
+        # Support older include-based scenes as well as current prepared assets.
+        include = root.find('include')
+        if include is None:
+            raise ValueError('Scene has no pelvis or included robot')
+        robot = ET.parse(scene.parent / include.attrib['file']).getroot()
+        pelvis = robot.find("./worldbody/body[@name='pelvis']")
+    if pelvis is None:
+        raise ValueError('Robot has no pelvis body')
+    ghost = copy.deepcopy(pelvis)
+    for element in ghost.iter():
+        if 'name' in element.attrib:
+            element.set('name', 'ref_' + element.attrib['name'])
+        if element.tag == 'geom':
+            element.set('contype', '0')
+            element.set('conaffinity', '0')
+            element.set('group', '1')
+            element.set('rgba', '0.35 0.65 1.0 0.3')
+    world.append(ghost)
+    for keyframe in list(root.findall('keyframe')):
+        root.remove(keyframe)
+    return ET.tostring(root, encoding='unicode')
 
 
 def load_comparison_model(scene: Path) -> Any:

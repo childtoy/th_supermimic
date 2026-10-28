@@ -174,3 +174,17 @@ rollout와 evaluator에는 제한이 없었다. 이제 policy 출력에서 공�
 기존 state_dict는 로드할 수 있으며 기존 checkpoint 평가에도 collector와 같은
 제한이 적용된다. 이 수정이 Boxing 붕괴의 주원인 또는 해결책인지는 아직
 장기 학습/비교 실험으로 검증하지 않았다. 기존 checkpoint를 보존한 뒤 평가한다.
+
+## 서버 결과 수집
+
+```bash
+python tools/collect_training_audit.py
+```
+
+`exports/k1_training_audit.tar.gz`에 네 run의 2,000회/4,000회/last checkpoint,
+학습 로그·설정·TensorBoard events, 50 Hz CSV/manifest, K1 MJCF/meshes와 현재
+소스 snapshot을 묶는다. checkpoint는 로드/수정하지 않고 원본 바이트를 보존한다.
+각 파일 SHA256과 수집 당시 commit·패키지 버전을 기록한다. 수집 당시 commit은
+학습 당시 commit의 증거가 아니므로 별도로 해석한다. `--groups boxing`으로
+선택 수집할 수 있다. 압축 전 용량을 먼저 출력하며 전체 수집은 수 GB일 수 있다.
+입력이 없거나 수집 중 변경되면 실패한다. 학습이 종료된 상태에서 실행한다.

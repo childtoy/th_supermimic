@@ -20,7 +20,13 @@ def main():
     p.add_argument('--output-dir', type=Path, required=True)
     p.add_argument('--switches', type=int, default=10)
     p.add_argument('--seed', type=int, default=42)
+    p.add_argument('--source', help='Fixed single-switch source primitive')
+    p.add_argument('--target', help='Fixed single-switch target primitive')
+    p.add_argument('--cutback-seconds', type=float, help='Cut source this many seconds before its end; requires an exact bank edge')
     a = p.parse_args()
+    fixed = any(x is not None for x in (a.source, a.target, a.cutback_seconds))
+    if fixed and (a.source is None or a.target is None or a.cutback_seconds is None or a.switches != 1):
+        p.error('Fixed playback requires --source, --target, --cutback-seconds and --switches 1')
     if a.switches < 1:
         p.error('--switches must be positive')
     if a.output_dir.exists() and any(a.output_dir.iterdir()):
@@ -70,12 +76,25 @@ def main():
         # Immutable local bank. Transform chosen clip into the current reference world frame.
         fields = ('root_p', 'root_R', 'root_v', 'root_w', 'body_p', 'body_R', 'body_v', 'body_w')
         original = {key: getattr(lib, key).clone() for key in fields}
-        active = sorted(primitives)[0]
+        active = a.source if fixed else sorted(primitives)[0]
+        fixed_edge = None
+        if fixed:
+            if active not in primitives or a.target not in primitives or active == a.target:
+                raise ValueError('Choose two different known primitives')
+            source_frames = records[primitives[active]]['source_frames']
+            if not np.isfinite(a.cutback_seconds) or a.cutback_seconds < 0:
+                raise ValueError('Cutback must be finite and nonnegative')
+            stop = source_frames - round(a.cutback_seconds * 30)
+            if stop < 10:
+                raise ValueError('Cutback is outside source length/context bounds')
+            fixed_edge = next((e for e in edges if e['source'] == active and e['target'] == a.target and e['stop'] == stop), None)
+            if fixed_edge is None:
+                raise ValueError('No exact cutback edge exists in the bank')
         initial = int(lib.clip_start[primitives[active]])
         env.reset_to_frames(torch.tensor([initial], device=env.device))
         target_start = initial
         # Commands are generated online after varying amounts of each primitive.
-        next_phase = rng.uniform(.55, 1.15)
+        next_phase = (fixed_edge['stop'] - 1) / 30 if fixed else rng.uniform(.55, 1.15)
         history = None
         events, refs, poses, labels, rewards, errors = [], [], [], [], [], []
         status = 'time_limit'
@@ -86,11 +105,11 @@ def main():
                 f = int(current['f'][0])
                 phase = (f - target_start) / 50
                 if len(events) < a.switches and phase >= next_phase:
-                    target = rng.choice(sorted(set(primitives) - {active}))
+                    target = a.target if fixed else rng.choice(sorted(set(primitives) - {active}))
                     candidates = [e for e in edges if e['source'] == active and e['target'] == target]
                     if not candidates:
                         raise ValueError(f'No edge {active} -> {target}')
-                    edge = min(candidates, key=lambda e: abs((e['stop'] - 1) / 30 - phase))
+                    edge = fixed_edge if fixed else min(candidates, key=lambda e: abs((e['stop'] - 1) / 30 - phase))
                     index = edge['index']
                     lo, hi = int(lib.clip_start[index]), int(lib.clip_end[index]) + 1
                     # Anchor on the last source frame; the very next step enters the bridge.
@@ -143,7 +162,7 @@ def main():
         result = dict(status=status, commands_issued=len(events), requested_commands=a.switches,
                       duration_s=(len(poses)-1)/50, normalized_step_reward=sum(rewards)/len(rewards)/mdp.max_step_reward,
                       mean_joint_rmse_rad=sum(errors)/len(errors), events=events,
-                      checkpoint=str(a.checkpoint.resolve()), seed=a.seed,
+                      checkpoint=str(a.checkpoint.resolve()), seed=a.seed, cutback_seconds=a.cutback_seconds,
                       method='Immediate nearest-phase pair selection; planar reference alignment; persistent history and physical state. No blending or retraining.',
                       limitation='Commands sampled during primitive playback, not during a bridge; no arbitrary rapid-command guarantee.')
         (a.output_dir / 'commands.json').write_text(json.dumps(result, indent=2) + '\n')

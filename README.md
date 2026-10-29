@@ -278,3 +278,16 @@ reference를 즉시 바꾼다. XY/yaw는 직전 reference에 정렬하고 높이
 발생시키지 않는다. 즉시 reference 교체는 즉시 target pose 도달과 다르며, 목표 모션
 진입까지 선택한 bridge 시간이 필요하다. 조기 종료하면 실패 상태와 해당 시점까지만
 저장하므로 생성된 영상 길이만으로 성공을 판단하지 않는다.
+
+동일 A→B의 잘라낸 시점 비교는 정확히 존재하는 bank edge를 지정한다:
+
+```bash
+python tools/command_demo.py --robot k1 \
+  --checkpoint runs/k1_traffic_control2/last.pt \
+  --motion-dir data/k1/traffic_control2 --assets-dir assets/k1 \
+  --source firm_stop --target come_forward --switches 1 --cutback-seconds 0.5 \
+  --output-dir runs/firm_stop_to_come_forward_cut05
+```
+
+`--cutback-seconds`는 원본 A의 끝에서 줄인 길이이며 bridge 길이가 아니다.
+원본보다 긴 cutback이나 bank에 없는 시점은 거부한다.

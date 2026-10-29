@@ -17,6 +17,76 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 
 
+class LiveRenderer:
+    """Own GL on a separate thread; retain only the most recent pose."""
+    def __init__(self, engine):
+        self.engine = engine
+        self.lock = threading.Lock()
+        self.pose = None
+        self.ms = 0.0
+        self.hz = 0.0
+        self.error = None
+        self.renderer_name = None
+        self.thread = threading.Thread(target=self.run, daemon=True)
+
+    def submit(self, policy_qpos, reference_qpos):
+        # Never wait for a render to complete and never build a frame backlog.
+        with self.lock:
+            self.pose = (policy_qpos, reference_qpos)
+
+    def run(self):
+        renderer = None
+        try:
+            import mujoco
+            from PIL import Image
+            from th_supermimic.tasks.motion_tracking.humanoid.supermimic.render import load_comparison_model
+            a = self.engine.args
+            model = load_comparison_model(a.assets_dir / 'scene.xml')
+            model.vis.global_.offwidth = max(a.render_width, model.vis.global_.offwidth)
+            model.vis.global_.offheight = max(a.render_height, model.vis.global_.offheight)
+            model.vis.headlight.ambient[:] = .45
+            model.vis.headlight.diffuse[:] = .55
+            data = mujoco.MjData(model)
+            renderer = mujoco.Renderer(model, width=a.render_width, height=a.render_height)
+            try:
+                from OpenGL.GL import glGetString, GL_RENDERER
+                name = glGetString(GL_RENDERER)
+                self.renderer_name = name.decode() if name else None
+            except Exception:
+                self.renderer_name = None
+            camera = mujoco.MjvCamera()
+            camera.distance, camera.azimuth, camera.elevation = 3.6, 135, -12
+            samples, timestamps = deque(maxlen=40), deque(maxlen=40)
+            while not self.engine.stop.is_set():
+                start = time.perf_counter()
+                with self.lock:
+                    pose = self.pose
+                    self.pose = None
+                if pose is None:
+                    self.engine.stop.wait(.01)
+                    continue
+                data.qpos[:model.nq//2], data.qpos[model.nq//2:] = pose
+                mujoco.mj_kinematics(model, data)
+                camera.lookat[:] = [data.qpos[0], data.qpos[1], .75]
+                renderer.update_scene(data, camera=camera)
+                buffer = io.BytesIO()
+                Image.fromarray(renderer.render()).save(buffer, format='JPEG', quality=75)
+                end = time.perf_counter()
+                samples.append((end-start)*1000)
+                timestamps.append(end)
+                with self.engine.lock:
+                    self.engine.jpeg = buffer.getvalue()
+                self.ms = sum(samples)/len(samples)
+                self.hz = (len(timestamps)-1)/(timestamps[-1]-timestamps[0]) if len(timestamps)>1 else 0.0
+                self.engine.stop.wait(max(0,1/a.render_fps-(end-start)))
+        except Exception as exc:
+            traceback.print_exc()
+            self.error = str(exc)
+        finally:
+            if renderer is not None:
+                renderer.close()
+
+
 class LiveEngine:
     def __init__(self, args):
         self.args = args
@@ -28,17 +98,16 @@ class LiveEngine:
         self.thread = threading.Thread(target=self.run, daemon=True)
 
     def run(self):
-        env = renderer = None
+        env = None
+        display = None
         try:
             import numpy as np
             import torch
-            import mujoco
-            from PIL import Image
             from th_supermimic.data.command_bank import CommandBank, reference_timing
             from th_supermimic.sim.env import TrackingEnv
             from th_supermimic.rl.algos.supermimic.geometry import unflatten_state
             from th_supermimic.tasks.motion_tracking.humanoid.supermimic.evaluate import load_policy
-            from th_supermimic.tasks.motion_tracking.humanoid.supermimic.render import load_comparison_model, flattened_qpos, reference_qpos
+            from th_supermimic.tasks.motion_tracking.humanoid.supermimic.render import flattened_qpos, reference_qpos
             a = self.args
             manifest = json.loads((a.motion_dir / 'manifest.json').read_text())
             records = manifest['clips']
@@ -49,15 +118,8 @@ class LiveEngine:
             policy = load_policy(env, saved)
             bank = CommandBank(env, records)
             lib, mdp = env.motion, env.supermimic_mdp
-            render_model = load_comparison_model(a.assets_dir / 'scene.xml')
-            render_model.vis.global_.offwidth = max(800, render_model.vis.global_.offwidth)
-            render_model.vis.global_.offheight = max(480, render_model.vis.global_.offheight)
-            render_model.vis.headlight.ambient[:] = .45
-            render_model.vis.headlight.diffuse[:] = .55
-            render_data = mujoco.MjData(render_model)
-            renderer = mujoco.Renderer(render_model, width=800, height=480)
-            camera = mujoco.MjvCamera()
-            camera.distance, camera.azimuth, camera.elevation = 3.6, 135, -12
+            display = LiveRenderer(self)
+            display.thread.start()
             actions = sorted(bank.primitives)
             history = None
             paused, failed, pending = True, False, None
@@ -67,7 +129,8 @@ class LiveEngine:
             transition_start = None
             sim_steps = 0
             events = deque(maxlen=12)
-            times, renders = deque(maxlen=100), deque(maxlen=40)
+            times = deque(maxlen=100)
+            was_advanced = False
             latencies = deque(maxlen=100)
             rates = deque(maxlen=100)
             last_render = 0.0
@@ -151,23 +214,20 @@ class LiveEngine:
                         if int(env.f[0]) >= end:
                             at_end, paused = True, True
                     compute_end = time.perf_counter()
-                    rates.append((compute_end, sim_steps))
+                    if advanced and not was_advanced:
+                        rates.clear()
+                    if advanced:
+                        rates.append((compute_end, sim_steps))
+                    was_advanced = advanced
                     if advanced:
                         times.append((compute_end-tick_start)*1000)
                     now = time.perf_counter()
                     if now-last_render >= 1/a.render_fps:
                         start_render = now
                         f = int(env.f[0])
-                        render_data.qpos[:render_model.nq//2] = flattened_qpos(env.info()['s'])[0].cpu().numpy()
-                        render_data.qpos[render_model.nq//2:] = reference_qpos(lib, env.f)[0].cpu().numpy()
-                        mujoco.mj_kinematics(render_model, render_data)
-                        camera.lookat[:] = [render_data.qpos[0], render_data.qpos[1], .75]
-                        renderer.update_scene(render_data, camera=camera)
-                        buffer = io.BytesIO()
-                        Image.fromarray(renderer.render()).save(buffer, format='JPEG', quality=80)
-                        jpeg = buffer.getvalue()
-                        render_ms = (time.perf_counter()-start_render)*1000
-                        renders.append(render_ms)
+                        policy_pose = flattened_qpos(env.info()['s'])[0].cpu().numpy().copy()
+                        reference_pose = reference_qpos(lib, env.f)[0].cpu().numpy().copy()
+                        display.submit(policy_pose, reference_pose)
                         last_render = now
                         timing = reference_timing(f, target_start, int(lib.clip_end[lib.clip_id[f]]), transition_start)
                         state = dict(status='failed' if failed else 'waiting' if at_end else 'paused' if paused else 'running', actions=actions,
@@ -176,20 +236,24 @@ class LiveEngine:
                                      **timing,
                                      primitive_durations={name:float((lib.clip_end[i]-lib.clip_start[i]).item())/50 for name,i in bank.primitives.items()},
                                      end_behavior='pause_simulation',
-                                     compute_ms=sum(times)/max(1,len(times)), render_ms=sum(renders)/len(renders),
+                                     compute_ms=sum(times)/max(1,len(times)), render_ms=display.ms,
+                                     render_hz=display.hz, render_error=display.error,
+                                     renderer_name=display.renderer_name,
+                                     renderer_decoupled=True,
                                      simulated_steps_per_wall_second=0.0 if paused or failed or len(rates)<2 else (rates[-1][1]-rates[0][1])/max(.001,rates[-1][0]-rates[0][0]),
                                      events=list(events), backend=a.backend,
                                      frame_at=time.time())
                         with self.lock:
-                            self.jpeg, self.snapshot = jpeg, state
+                            self.snapshot = state
                     self.stop.wait(max(0, .02-(time.perf_counter()-tick_start)))
         except Exception as exc:
             traceback.print_exc()
             with self.lock:
                 self.snapshot = dict(status='error', error=str(exc), actions=[], events=[])
         finally:
-            if renderer is not None:
-                renderer.close()
+            if display is not None:
+                self.stop.set()
+                display.thread.join(timeout=10)
             if env is not None:
                 env.close()
 
@@ -245,7 +309,11 @@ def main():
     p.add_argument('--host',default='127.0.0.1')
     p.add_argument('--port',type=int,default=6006)
     p.add_argument('--render-fps',type=float,default=10)
+    p.add_argument('--render-width',type=int,default=640)
+    p.add_argument('--render-height',type=int,default=384)
     a=p.parse_args()
+    if not 160<=a.render_width<=1920 or not 120<=a.render_height<=1080:
+        p.error('Render dimensions out of range')
     if not 1<=a.render_fps<=50:
         p.error('--render-fps must be 1..50')
     os.environ['TH_SUPERMIMIC_ROBOT']=a.robot

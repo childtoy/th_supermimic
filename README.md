@@ -291,3 +291,60 @@ python tools/command_demo.py --robot k1 \
 
 `--cutback-seconds`는 원본 A의 끝에서 줄인 길이이며 bridge 길이가 아니다.
 원본보다 긴 cutback이나 bank에 없는 시점은 거부한다.
+
+## 브라우저에서 1–4 실시간 모션 제어
+
+GPU policy/물리 계산을 실행하는 로컬 HTTP 서버와 실제 렌더링 화면이다.
+녹화 영상을 이어 재생하는 UI가 아니다. Sites 같은 정적 호스팅만으로는 GPU 엔진을
+실행할 수 없으므로 실행 PC에서 서버를 켜고 같은 PC의 브라우저로 접속한다.
+
+```bash
+pip install -e '.[web]'
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+python tools/web_play.py --robot k1 \
+  --checkpoint runs/k1_traffic_control2/last.pt \
+  --motion-dir data/k1/traffic_control2 --assets-dir assets/k1
+```
+
+`http://127.0.0.1:6006`를 열고 1–4 또는 버튼으로 조작한다. 시작은 일시정지이며
+첫 모션 버튼을 누르면 실행한다. 서버는 기본 loopback에만 바인딩한다. 원격 서버에서
+실행한다면 SSH 포워딩(`ssh -L 6006:127.0.0.1:6006 USER@SERVER`) 후 접속할 수 있다.
+`--backend mujoco`는 CPU 비교용, 기본은 mjwarp. `--render-fps 10`은 화면 갱신 목표이며
+policy 제어 목표는 50Hz다. 추가 프레임 렌더링도 같은 worker의 시간을 쓰므로 처리
+속도를 보고 판단한다. 실패 시 물리를 정지하고 명시적 Reset으로만 초기화한다.
+
+전환은 현재 재생 시점과 가까운 pair를 선택해 즉시 reference를 교체한다. 전이 도중
+추가 명령은 마지막 것만 대기시켜 다음 primitive 진입 직후 적용한다. 같은 모션을
+다시 선택하는 것은 새 A→A 전이를 생성하지 않는다. 끝에서는 정적 자세를 계속
+추종할 수 있다고 가정하지 않고 물리 시뮬레이션을 정지한다. 다음 다른 모션 명령이
+오면 기존 물리 상태/history에서 이어가며, Reset만 상태/history를 초기화한다.
+
+측정값은 서버 수신→적용 시간(대기열 포함), 제어 계산 ms/step, 실제 처리 Hz이다.
+브라우저 네트워크 왕복과 표시 지연을 포함한 end-to-end latency는 아니다.
+로컬 RTX3080 Ti Laptop의 한 테스트에서 실행 중 약 49.6Hz, 대기 없는 전환의
+서버 수신→적용 약 9–14ms를 관측했다. 전이 도중 대기시킨 명령은 약 1.36초 후에
+적용됐다. 이 값은 하드웨어·부하에 따라 달라지며 실시간 보장 수치가 아니다.
+
+### 기존 도커에서 6006 포트로 실행
+
+학습에 썼던 conda 환경을 활성화한 도커 터미널에서, repository 루트 기준:
+
+```bash
+git pull
+pip install -e '.[web]'
+HOST=0.0.0.0 PORT=6006 bash scripts/run_web_play.sh
+```
+
+기본 checkpoint는 `runs/k1_traffic_control2/last.pt`, reference는
+`data/k1/traffic_control2`, assets는 `assets/k1`이다. 경로가 다르면
+`CHECKPOINT`, `MOTION_DIR`, `ASSETS_DIR` 환경변수로 지정한다.
+도커 내부 6006이 호스트에 이미 매핑되어 있다면 그 **호스트 포트**로 접속한다.
+예를 들어 `20031->6006/tcp`이면 브라우저 주소는 `http://SERVER:20031`이다.
+TensorBoard가 도커 내부 6006을 사용 중이면 같은 포트에서 동시에 실행할 수 없으니
+그 TensorBoard를 먼저 종료해야 한다. 이 스크립트는 기존 프로세스를 종료하지 않는다.
+
+모션 버튼에는 전체 길이를, 진행 막대에는 현재 시간/전체 시간과 남은 시간을
+표시한다. 연결 중에는 transition 타이머가 별도로 나온다. 시간은 로드한 실제
+reference의 50Hz 프레임 수 기준이다. Reset 버튼 또는 R 키는 로봇/history/대기 명령/
+진행 시간/전환 기록을 초기화하고 일시정지한다. 끝의 정지는 policy가 물리적으로
+자세를 버티는 기능이 아니라 물리 시뮬레이션 정지다.

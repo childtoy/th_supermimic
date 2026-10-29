@@ -14,6 +14,7 @@ dev = ["pytest", "ruff"]
 warp = ["mujoco-warp==3.8.1", "warp-lang==1.13.0"]
 logging = ["tensorboard>=2.14"]
 video = ["imageio[ffmpeg]>=2.37", "pillow>=10"]
+web = ["aiohttp>=3.9,<4", "pillow>=10"]
 
 [project.scripts]
 th-supermimic-train = "th_supermimic.scripts.launch:main"

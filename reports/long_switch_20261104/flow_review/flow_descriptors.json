@@ -1,0 +1,758 @@
+[
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 1.2303400039672852,
+    "joint_pose_span_rms_rad": 0.5800129175186157
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 1.0446820259094238,
+    "joint_pose_span_rms_rad": 0.41090574860572815
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 1.0909770727157593,
+    "joint_pose_span_rms_rad": 0.2892683744430542
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.7303417325019836,
+    "joint_pose_span_rms_rad": 0.2703216075897217
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 1.1098722219467163,
+    "joint_pose_span_rms_rad": 0.4788658022880554
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 1.2672864198684692,
+    "joint_pose_span_rms_rad": 0.5718858242034912
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.5941210389137268,
+    "joint_pose_span_rms_rad": 0.4385826885700226
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 1.2026864290237427,
+    "joint_pose_span_rms_rad": 0.6221070885658264
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 1.0546256303787231,
+    "joint_pose_span_rms_rad": 0.4017045497894287
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 0.7336583137512207,
+    "joint_pose_span_rms_rad": 0.21077723801136017
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.5842843651771545,
+    "joint_pose_span_rms_rad": 0.2229212075471878
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 1.0483660697937012,
+    "joint_pose_span_rms_rad": 0.4501357078552246
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 1.157477855682373,
+    "joint_pose_span_rms_rad": 0.5297420620918274
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.5211251974105835,
+    "joint_pose_span_rms_rad": 0.3940414786338806
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 1.2021491527557373,
+    "joint_pose_span_rms_rad": 0.6226202845573425
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 1.6684833765029907,
+    "joint_pose_span_rms_rad": 0.673682689666748
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 1.3600459098815918,
+    "joint_pose_span_rms_rad": 0.5181556940078735
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.9991063475608826,
+    "joint_pose_span_rms_rad": 0.23710770905017853
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 0.40960493683815,
+    "joint_pose_span_rms_rad": 0.18690750002861023
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 0.6958877444267273,
+    "joint_pose_span_rms_rad": 0.3139688968658447
+  },
+  {
+    "case": "boxing__to__traffic_control1__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.8606081008911133,
+    "joint_pose_span_rms_rad": 0.4541030824184418
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 0.8044476509094238,
+    "joint_pose_span_rms_rad": 0.6067409515380859
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 0.21909010410308838,
+    "joint_pose_span_rms_rad": 0.07745938003063202
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 0.07811149209737778,
+    "joint_pose_span_rms_rad": 0.034588880836963654
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.4446646273136139,
+    "joint_pose_span_rms_rad": 0.19935095310211182
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 1.890112280845642,
+    "joint_pose_span_rms_rad": 0.8136740326881409
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 0.8723587989807129,
+    "joint_pose_span_rms_rad": 0.36035066843032837
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.4125821888446808,
+    "joint_pose_span_rms_rad": 0.30198246240615845
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 0.8056394457817078,
+    "joint_pose_span_rms_rad": 0.5988519787788391
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 0.1431214064359665,
+    "joint_pose_span_rms_rad": 0.05651574209332466
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 0.07042329758405685,
+    "joint_pose_span_rms_rad": 0.030315959826111794
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.47299709916114807,
+    "joint_pose_span_rms_rad": 0.20340223610401154
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 1.8554821014404297,
+    "joint_pose_span_rms_rad": 0.809029221534729
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 0.7631327509880066,
+    "joint_pose_span_rms_rad": 0.3110532760620117
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.3294224441051483,
+    "joint_pose_span_rms_rad": 0.24470743536949158
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 0.8058509826660156,
+    "joint_pose_span_rms_rad": 0.5988532304763794
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 1.9833135604858398,
+    "joint_pose_span_rms_rad": 0.857695996761322
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 0.5549750924110413,
+    "joint_pose_span_rms_rad": 0.2044602781534195
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.24886155128479004,
+    "joint_pose_span_rms_rad": 0.11428917944431305
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 0.5888341665267944,
+    "joint_pose_span_rms_rad": 0.28171730041503906
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 1.518743872642517,
+    "joint_pose_span_rms_rad": 0.6966226696968079
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t00500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.7564705610275269,
+    "joint_pose_span_rms_rad": 0.42174115777015686
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 0.848254382610321,
+    "joint_pose_span_rms_rad": 0.4463265538215637
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 1.8726859092712402,
+    "joint_pose_span_rms_rad": 0.8468048572540283
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 1.1296862363815308,
+    "joint_pose_span_rms_rad": 0.38496944308280945
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.9124830365180969,
+    "joint_pose_span_rms_rad": 0.39454880356788635
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 1.153484582901001,
+    "joint_pose_span_rms_rad": 0.48716428875923157
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 1.3946889638900757,
+    "joint_pose_span_rms_rad": 0.613143801689148
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.5941210389137268,
+    "joint_pose_span_rms_rad": 0.4385826885700226
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 0.7643519043922424,
+    "joint_pose_span_rms_rad": 0.376630961894989
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 1.1297787427902222,
+    "joint_pose_span_rms_rad": 0.5048279762268066
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 0.9915907382965088,
+    "joint_pose_span_rms_rad": 0.4443986117839813
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.6873831748962402,
+    "joint_pose_span_rms_rad": 0.2938477694988251
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 0.6994470953941345,
+    "joint_pose_span_rms_rad": 0.28825774788856506
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 1.078579306602478,
+    "joint_pose_span_rms_rad": 0.4536970555782318
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.5150972008705139,
+    "joint_pose_span_rms_rad": 0.37548303604125977
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 0.7626729607582092,
+    "joint_pose_span_rms_rad": 0.37602606415748596
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 1.3081787824630737,
+    "joint_pose_span_rms_rad": 0.5087206959724426
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 1.6318622827529907,
+    "joint_pose_span_rms_rad": 0.753158450126648
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.6090969443321228,
+    "joint_pose_span_rms_rad": 0.22623935341835022
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 0.3923850953578949,
+    "joint_pose_span_rms_rad": 0.18631353974342346
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 0.704171359539032,
+    "joint_pose_span_rms_rad": 0.32048216462135315
+  },
+  {
+    "case": "boxing__to__traffic_control1__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.8345972895622253,
+    "joint_pose_span_rms_rad": 0.4391605257987976
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 1.3443323373794556,
+    "joint_pose_span_rms_rad": 0.6425334811210632
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 0.8108486533164978,
+    "joint_pose_span_rms_rad": 0.3482205867767334
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 0.5309188961982727,
+    "joint_pose_span_rms_rad": 0.177994042634964
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.4519895613193512,
+    "joint_pose_span_rms_rad": 0.16859573125839233
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 1.827877402305603,
+    "joint_pose_span_rms_rad": 0.7933924198150635
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 0.879753589630127,
+    "joint_pose_span_rms_rad": 0.363136887550354
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "reference",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.4125821888446808,
+    "joint_pose_span_rms_rad": 0.30198246240615845
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 1.2897995710372925,
+    "joint_pose_span_rms_rad": 0.6210638284683228
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 0.729010283946991,
+    "joint_pose_span_rms_rad": 0.31846943497657776
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 0.4124298095703125,
+    "joint_pose_span_rms_rad": 0.13264188170433044
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.34987199306488037,
+    "joint_pose_span_rms_rad": 0.14103765785694122
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 1.781393051147461,
+    "joint_pose_span_rms_rad": 0.8105384111404419
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 0.7674479484558105,
+    "joint_pose_span_rms_rad": 0.3222717344760895
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "policy",
+    "signal": "policy",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.3416123390197754,
+    "joint_pose_span_rms_rad": 0.25442323088645935
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": -1,
+    "end_s": 0,
+    "mean_joint_rms_speed_rad_s": 1.2853597402572632,
+    "joint_pose_span_rms_rad": 0.6207103133201599
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 0,
+    "end_s": 0.5,
+    "mean_joint_rms_speed_rad_s": 1.9500069618225098,
+    "joint_pose_span_rms_rad": 0.8272809982299805
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 0.5,
+    "end_s": 1,
+    "mean_joint_rms_speed_rad_s": 0.6508491039276123,
+    "joint_pose_span_rms_rad": 0.2630544602870941
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 1,
+    "end_s": 1.5,
+    "mean_joint_rms_speed_rad_s": 0.2551257312297821,
+    "joint_pose_span_rms_rad": 0.11808677017688751
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 1.5,
+    "end_s": 2,
+    "mean_joint_rms_speed_rad_s": 0.6043529510498047,
+    "joint_pose_span_rms_rad": 0.289184033870697
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 2,
+    "end_s": 2.5,
+    "mean_joint_rms_speed_rad_s": 1.526680588722229,
+    "joint_pose_span_rms_rad": 0.7017567753791809
+  },
+  {
+    "case": "traffic_control1__to__traffic_control2__t01500",
+    "mode": "direct_cut",
+    "signal": "policy",
+    "start_s": 2.6,
+    "end_s": 3.4,
+    "mean_joint_rms_speed_rad_s": 0.7415729761123657,
+    "joint_pose_span_rms_rad": 0.4172104597091675
+  }
+]

@@ -3,7 +3,13 @@ import re
 
 
 def parse_bank(records):
-    primitives = {r['name'].split('__primitive__')[1]: i for i, r in enumerate(records) if '__primitive__' in r['name']}
+    primitives = {}
+    for i, r in enumerate(records):
+        name = r['name']
+        if '__primitive__' in name:
+            primitives[name.split('__primitive__', 1)[1]] = i
+        elif name.startswith('primitive__'):
+            primitives[name[len('primitive__'):]] = i
     edges = []
     for i, r in enumerate(records):
         m = re.search(r'([^_]+(?:_[^_]+)*)__to__([^_]+(?:_[^_]+)*)__a(\d+)__c(\d+)$', r['name'])

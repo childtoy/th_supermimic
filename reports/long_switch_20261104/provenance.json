@@ -1,0 +1,30 @@
+{
+  "checkpoint_sha256": "1dc36cfe58e71c8be8c989e95f6af5f4fcfc0c0b5682cf4be4366a3f44e780c8",
+  "iteration": 11500,
+  "source_run": "runs/long_switch_live_audit_54_20261104",
+  "recorded_trials": [
+    0,
+    2,
+    9,
+    11,
+    18,
+    20,
+    27,
+    29
+  ],
+  "sample_hz": 50,
+  "derivative": "Position-based SG window 11 samples (0.22s), polynomial degree 5; derivatives over full continuous trace before slicing; also raw third differences",
+  "limitations": [
+    "Smoothness covers eight recorded policy/direct-cut trials, not all 162.",
+    "No measured torque traces are available; action differences are not actual torque.",
+    "Source window is continuation before command, not a matched counterfactual run.",
+    "Reference switch discontinuities affect numerical jerk; filtering spreads peaks over nearby samples.",
+    "No physical safety threshold or deployment validation is implied."
+  ],
+  "files": {
+    "result.json": "d75d7a749b3e230178066477560b27202ec8d04fde43d5d93b036406d94ac81a",
+    "trials.csv": "b6176ef954beef09b3baa88c606ad8d092df13527891d504095c2913eb746c10",
+    "videos.npz": "899323fde7908735ef252e72c4c7e42078cbb95af1fd3f13cdf730f52069f227",
+    "wm_audit_inputs.pt": "b737072895ee204fe17ef68f1cc9aeb9fa3931e882aa7fa40041b76b376d5582"
+  }
+}

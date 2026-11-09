@@ -1,5 +1,60 @@
 # th_supermimic 작업 인수인계
 
+> 2026-11-08 최신 학습: 사용자 지시로 `runs/ai_sapiens_v8_transitions_20261108/`에서 75 clip(V8 H2R primitive3 + full transition72) 통합 SuperMimic 학습 시작. 8env/3회 smoke 통과 후 GPU0/mjwarp 4096env/12000회 실행. 이전 중단 primitive-only run 재개가 아니다. `AI_SAPIENS_V8_TRANSITION_TRAIN_20261108.md`, run status/pipeline/train_log 확인. 완료/성공으로 보고하지 말 것.
+
+> 2026-11-08 완료 확인: V8 RMAI → K1 변환 75/75, 실패 0. 연결 FK 영상 72/72 및 데이터 검증 완료, H2R 119파일 변경 없음. `../RMAI/runs/ai_sapiens_v8_transitions_05_20261108/k1_review/index.html` 참조. 아래 실행 중 메모는 이전 상태다. 학습/물리 rollout 미실행.
+
+> 2026-11-08 후속 실행 중: 사용자 지시로 V8 human 72전환+3primitive를 같은 run의 `robots/`에 고정 H2R로 K1 일괄 변환 시작. CPU24 worker, full stages 보존. `/tmp/ai_sapiens_v8_h2r.log` 진행 확인. 완료 뒤 `review_ai_sapiens_k1_transitions.py` 자동 실행을 걸어 `k1_review/` 영상/validation을 생성하도록 했다(`/tmp/ai_sapiens_v8_k1_review.log`). 완료 판정은 `robots/batch_manifest.json`의 75/75 및 `k1_review/validation.json`을 확인할 것. 학습 미실행.
+
+> 2026-11-08 최신: 사용자 선택 V8 human으로 RMAI 0.5초 cutback 간격의 6방향×12시점=72전환 + 3primitive 생성 완료. `../RMAI/AI_SAPIENS_V8_TRANSITIONS_20261108.md`, `../RMAI/runs/ai_sapiens_v8_transitions_05_20261108/review/index.html` 참조. B frame0 고정, 후보 0.5/1.0/1.5초 중 전부 rank1에서 1.5초 선택. A/B 원본 구간 보존 및 72개 hash/유한값/feature 검증 통과. 경계 자세 차이가 남아 자연스러운 연결 성공으로 단정하지 않는다. K1 변환/학습은 아직 미실행.
+
+> 2026-11-08 골반/지지발 후속: `../RMAI/runs/ai_sapiens_roundtrip_20261108/support_review/index.html`에 3모션 × v6/v7/v8 추가 왕복 비교 완료. hard leg IK는 접촉/높이를 개선하지만 q 복원 악화. v8 root-only를 완만한 검토 후보로 보존(Squat 침투 5.6→2.7cm, q RMS 0.1535→0.1536rad). 춤 body 오차 소폭 악화. 자동 채택/학습 재개 없음. 고정 H2R 119파일 hash 동일.
+
+> 2026-11-08 후속: SOMA→K1 고정 왕복 검증 완료. R2H의 head/pelvis/hand/foot frame만 수정한 v5에서 관절 RMS가 Dance1 0.529→0.128, Dance2 0.523→0.127, Squat 0.533→0.153rad. `../RMAI/runs/ai_sapiens_roundtrip_20261108/index.html`에 비교 영상·그림. 최신 human=`../RMAI/runs/ai_sapiens_r2h_v5_20261108/`. 기존 v3는 형식/FK는 맞았으나 H2R semantic 축이 불일치했다. 발 침투/스쿼트 높이 차이는 남음. transition 생성/학습은 미실행.
+
+> 2026-11-08 ai_sapiens 대체 R2H: `../RMAI/runs/ai_sapiens_r2h_v3_20261108/`에 3모션 human SOMA77 30/50Hz, 원본과 비교하는 50fps 영상 및 검증을 저장했다. 공식 FK 최대 오차 6.7e-7m, RIMKit 입력 로딩 통과. 약 4~5cm 발 침투가 남는 기하학 초안. RIMKit 자체는 H2R이며 missing CoRe R2H를 그대로 재현한 것은 아니다. transition 생성/학습은 미실행.
+
+> 2026-11-08 정정: ai_sapiens primitive-only 학습은 사용자 의도와 달라 중단했다. 먼저 K1→human, human transition 생성, K1 retarget 후 primitive+transition 학습이 필요하다. 기존 run/status와 기록을 보존했다.
+
+> 2026-11-08: ai_sapiens의 Dance1/Dance2/Squat을 하나의 새 SuperMimic policy로 학습 시작. 8-env smoke 완료 후 GPU 0에서 4096-env/12000회 본 학습. root=`runs/ai_sapiens_three_20261108/`; 상세/입력 규약은 [AI_SAPIENS_TRAIN_20261108.md](AI_SAPIENS_TRAIN_20261108.md). 수렴 완료가 아니라 실행 시작 상태이며 status/log를 확인할 것.
+
+> 2026-11-07: [Play에서 확인된 성과 정리](PLAY_SUCCESS_SUMMARY_20261107.md). 기존 bank의 연속 명령 수행, long-motion base, sparse phase 평가를 구분했다. 새 cross-full bridge의 완주는 자연스러운 연결 재현 성공으로 세지 않는다.
+
+> 자연스러움 재검토: [flow_review/README.md](reports/long_switch_20261104/flow_review/README.md). 대표 두 조건의 ghost 없는 25fps 비교를 추가했다. Boxing은 다른 중간 자세로 목표에 도달하며, Traffic@5초는 reference부터 정체 구간을 보인다. jerk 감소를 자연스러움과 등치하지 않는다. bridge 길이/B 진입 phase 비교는 제안이며 아직 미실행.
+
+> 전환 실험 기록 묶음: [reports/long_switch_20261104/README.md](reports/long_switch_20261104/README.md). 전체 평가 그림/CSV, 대표 paired 8회 실제/reference jerk 그림, 영상 6개, 출처/hash를 보존했다. 브라우저 보기: `reports/long_switch_20261104/index.html`.
+
+> 독립 재검증: 54개 조건 × 3방식 = 162회 연속 물리 실행 완료. RMAI/direct-cut 모두 54/54 hard 완주, quality 통과는 각각 33/54와 28/54. Boxing 출구 bridge quality는 1/18에 그침. zero-action은 54/54 hard 종료. 명령/handoff 물리 state/history 변경 및 unexpected reset 없음.
+> **완주를 고품질 전환 성공으로 해석하면 안 된다.** 정상 WM bridge MAE 0.00182지만 zero-action에서는 0.09887. 상세는 [LONG_SWITCH_AUDIT_20261104.md](LONG_SWITCH_AUDIT_20261104.md)를 우선 참고한다.
+
+> 2026-11-04 후속: frozen long-base로 새 RMAI 교차 전이 18개를 진단했다. Bridge+첫 1초와 원래 긴 B로의 handoff/완주 모두 18/18 성공.
+> Bridge 평균 실제 0.8416 / WM 0.8424. Boxing 출구의 낮은 fidelity와 큰 reference 경계 차이를 관측했다.
+> 상세/한계/영상은 [LONG_SWITCH_DIAGNOSIS_20261104.md](LONG_SWITCH_DIAGNOSIS_20261104.md). 추가 학습은 아직 하지 않았다.
+
+> 2026-11-04 확인: `long_full_base_20261103`은 **12,000회 학습과 영상 생성까지 완료**했다.
+> best=11,500회, 세 full clip 완주, 평균 return 0.9333. 상세 결과는 [LONG_FULL_BASE_20261103.md](LONG_FULL_BASE_20261103.md).
+
+> 현재 우선 작업은 **30초 이상 full motion 세 개를 하나의 SuperMimic policy로 12,000회 학습하는 base 확보**다.
+> 실행 경로와 설정: [LONG_FULL_BASE_20261103.md](LONG_FULL_BASE_20261103.md).
+> `runs/long_full_base_20261103/status.txt`와 동명의 `.log`로 실제 진행을 확인한다.
+> 이 base가 준비된 뒤 cross-full transition 평가와 필요한 연결의 추가 학습으로 진행한다.
+
+> 사용자 첨부 대화의 핵심은 온라인 전이 탐색이 아니라 **오프라인에서 어려운 phase만 추가하는 adaptive 학습**이다.
+> 즉시 수행한 policy+WM 점수 calibration과 다음 실험은 [ADAPTIVE_TRANSITION_STUDY_20261103.md](ADAPTIVE_TRANSITION_STUDY_20261103.md)에 있다.
+> 현재 검증은 실제 simulator state/history를 시작점으로 쓴 oracle-start 진단이며 adaptive 학습 비용 절감을 입증한 결과는 아니다.
+
+> 최신 연구 논의·sparse phase 실험 결과: [RESEARCH_DISCUSSION_20261103.md](RESEARCH_DISCUSSION_20261103.md).
+> `runs/phase15_20261101_123724`의 네 run은 3,000회 학습과 heldout 평가까지 완료했다.
+> 온라인 R2H2R·diffusion planner는 구현한 기능이 아니라 논의 중인 후보안이다.
+
+> 2026-11-01 추가 실험은 [REVIEW_20261101.md](REVIEW_20261101.md)를 먼저 확인한다.
+> 기존 checkpoint 재평가·비교 영상 36개, Boxing recovery 및 연속 명령 실험을 수행했다.
+> 새 실행 후보 `runs/boxing_recovery_20261101/finetune/ckpt_000300.pt`는
+> 52개 clip 모두 완료(return 0.8815), 상태 기반 선택으로 seed 42/7 각각 온라인 10회 완료.
+> Boxing target suffix가 canonical primitive와 달라지는 문제를 발견했다.
+> 생성 human B는 동일하므로 이후 export/retarget 경로를 확인해야 한다.
+> `pose_velocity`는 command_demo의 실험 옵션이며 웹의 기본 phase 선택은 변경하지 않았다.
+
 작성일: 2026-10-30 (Asia/Seoul)
 기준 코드: `2076761` (렌더링/제어 분리 수정). 이 문서 이후 코드 변경 시 관련 내용도 갱신한다.
 

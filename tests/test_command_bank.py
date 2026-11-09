@@ -10,6 +10,15 @@ def test_pair_name_and_timing():
     assert edges==[dict(index=2,source='firm_stop',target='come_forward',stop=56,bridge=45)]
 
 
+def test_v8_unprefixed_primitives():
+    records = [dict(name='primitive__dance1', source_frames=180),
+               dict(name='primitive__squat', source_frames=179),
+               dict(name='ai_sapiens_v8__dance1__to__squat__a00090__c00000', source_frames=314)]
+    primitives, edges = parse_bank(records)
+    assert primitives == {'dance1': 0, 'squat': 1}
+    assert edges == [dict(index=2, source='dance1', target='squat', stop=90, bridge=45)]
+
+
 def test_bank_switch_preserves_physical_state_and_rigid_geometry():
     records=[dict(name='x__primitive__a',source_frames=60),dict(name='x__primitive__b',source_frames=60),dict(name='x__x__a__to__b__a00030__c00000',source_frames=135)]
     n=400

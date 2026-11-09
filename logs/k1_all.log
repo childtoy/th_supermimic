@@ -1,0 +1,111 @@
+nohup: ignoring input
+Warp 1.13.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.8
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA RTX A6000" (48 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /root/.cache/warp/1.13.0
+Module mujoco_warp._src.io 00dd7e1 load on device 'cuda:0' took 1.30 ms  (cached)
+Module mujoco_warp._src.smooth 976a5d7 load on device 'cuda:0' took 1.01 ms  (cached)
+Module _tile_cholesky_factorize__locals__cholesky_factorize_c9f69c70 d6a115c load on device 'cuda:0' took 79.81 ms  (cached)
+Module _tile_cholesky_solve__locals__cholesky_solve_18a51966 82b4bb9 load on device 'cuda:0' took 25.65 ms  (cached)
+Module mujoco_warp._src.collision_driver fbb0ee0 load on device 'cuda:0' took 0.42 ms  (cached)
+Module _nxn_broadphase__locals__kernel_d86cb85d d86cb85 load on device 'cuda:0' took 0.34 ms  (cached)
+Module _primitive_narrowphase__locals__primitive_narrowphase_4e3ce88c 4e3ce88 load on device 'cuda:0' took 0.44 ms  (cached)
+Module mujoco_warp._src.constraint eb0e24d load on device 'cuda:0' took 0.67 ms  (cached)
+Module _efc_contact_init__locals__kernel_9ba4ce0a 9ba4ce0 load on device 'cuda:0' took 0.34 ms  (cached)
+Module _efc_contact_jac_dense__locals__kernel_01c4be66 7acc2da load on device 'cuda:0' took 0.46 ms  (cached)
+Module _efc_contact_update__locals__kernel_17621467 1762146 load on device 'cuda:0' took 0.34 ms  (cached)
+Module mujoco_warp._src.forward a76b6a3 load on device 'cuda:0' took 0.69 ms  (cached)
+Module mujoco_warp._src.passive 616927b load on device 'cuda:0' took 0.48 ms  (cached)
+Module mujoco_warp._src.forward 398750d load on device 'cuda:0' took 0.69 ms  (cached)
+Module mujoco_warp._src.support f32a4f8 load on device 'cuda:0' took 0.35 ms  (cached)
+Module _tile_cholesky_factorize_solve__locals__cholesky_factorize_solve_713a67a8 f26e39c load on device 'cuda:0' took 101.50 ms  (cached)
+Module mujoco_warp._src.solver 7df28c9 load on device 'cuda:0' took 0.65 ms  (cached)
+Module solve_init_jaref__locals__kernel_5e374c10 5e374c1 load on device 'cuda:0' took 0.35 ms  (cached)
+Module mul_m_dense__locals___mul_m_dense_baf8ffc1 baf8ffc load on device 'cuda:0' took 0.35 ms  (cached)
+Module update_constraint_efc__locals__kernel_6bfb2757 6bfb275 load on device 'cuda:0' took 0.35 ms  (cached)
+Module update_constraint_gauss_cost__locals__kernel_50df2679 50df267 load on device 'cuda:0' took 0.34 ms  (cached)
+Module update_gradient_JTDAJ_dense_tiled__locals__kernel_4de01142 7b239d0 load on device 'cuda:0' took 0.80 ms  (cached)
+Module update_gradient_cholesky__locals__kernel_9a439e2c e93695e load on device 'cuda:0' took 102.32 ms  (cached)
+Module linesearch_iterative__locals__kernel_f36803d7 4679980 load on device 'cuda:0' took 0.49 ms  (cached)
+Module update_constraint_efc__locals__kernel_8ad6290a 8ad6290 load on device 'cuda:0' took 0.36 ms  (cached)
+Module mujoco_warp._src.sensor bee2d80 load on device 'cuda:0' took 0.65 ms  (cached)
+Module mujoco_warp._src.derivative f06cf21 load on device 'cuda:0' took 0.42 ms  (cached)
+TensorBoard logging to: runs/k1_all
+x86_64 | NVIDIA RTX A6000 | torch 2.5.1+cu124
+Warming up...
+Replay buffer: 64/1,000 steps (6%)
+Compiling world model (one-off, slow on first run)
+Compiling policy update (one-off, slow on first run)
+/root/anaconda3/envs/env_kimodo_inb/lib/python3.10/site-packages/torch/_inductor/compile_fx.py:167: UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
+  warnings.warn(
+Saved checkpoint: runs/k1_all/ckpt_002000.pt
+Saved checkpoint: runs/k1_all/ckpt_004000.pt
+Saved checkpoint: runs/k1_all/ckpt_006000.pt
+Saved checkpoint: runs/k1_all/ckpt_008000.pt
+Saved checkpoint: runs/k1_all/ckpt_010000.pt
+Saved checkpoint: runs/k1_all/ckpt_012000.pt
+╭───────────────────  🚀 SuperMimic | TrackingEnv | mjwarp  ───────────────────╮
+│ WM-only 500/500   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% done │
+│ Joint 11500/11500 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% done │
+│ ⏱ 3h13m59s | Joint done | 1.04 it/s | 10,609 steps/s | Saved checkpoint: ru… │
+│ x86_64 | NVIDIA RTX A6000 | torch 2.5.1+cu124                                │
+│                                                                              │
+│ Metrics                                                                Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ wm_loss                                                               0.0779 │
+│ wm_err8                                                               0.1122 │
+│ pi_loss                                                              -10.698 │
+│ v_loss                                                                 1.025 │
+│ imag_rew                                                              0.7515 │
+│ imag_survival                                                         0.9967 │
+│ pi_gradnorm                                                            2.353 │
+│ lr                                                                  1.99e-04 │
+│                                                                              │
+│ Reward / Episode                                                       Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ sim_rew ▲                                          Mean 0.4301 / Peak 0.6022 │
+│                                             ▆▇▇█▇▆▆▇▆▆▄▃▃▃▄▃▁▄▄▅▂▃▅▄▃▃▂▅▆▆▅▅ │
+│ ep_len                                                                  62.4 │
+│ ep_ret_norm                                                           -8.866 │
+│ term_frac                                                               2.7% │
+│                                                                              │
+│ Timing (per iteration)                                                 Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Collect                                                        264.2ms   26% │
+│ Learn                                                          739.4ms   74% │
+│ Total                                                         1003.6ms  100% │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── Training Summary ──────────────────────────────╮
+│ Training complete                                                            │
+│   Algo: SuperMimic | Env: TrackingEnv | Backend: mjwarp                      │
+│   Iterations: 12000/12000                                                    │
+│   Wall time: 3h13m59s                                                        │
+│   x86_64 | NVIDIA RTX A6000 | torch 2.5.1+cu124                              │
+│   Final: wm_loss=0.0779, wm_err8=0.1122, pi_loss=-10.698, v_loss=1.025,      │
+│ imag_rew=0.7515, imag_survival=0.9967, pi_gradnorm=2.353, lr=1.99e-04        │
+│   Last checkpoint: runs/k1_all/ckpt_012000.pt                                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{
+  "completed": true,
+  "iteration": 12000,
+  "sim_steps": 123142144,
+  "wall_time": 11639.880452156067,
+  "wall_h": 3.233187341954973,
+  "wm_loss": 0.06420685850083828,
+  "wm_err8": 0.09426651015877724,
+  "pi_loss": -11.097863464355468,
+  "v_loss": 1.0710368764400482,
+  "imag_rew": 0.7495827054977418,
+  "pi_gradnorm": 1.962801456451416,
+  "imag_survival": 0.9953872966766357,
+  "sim_rew": 0.4313208817243576,
+  "ep_len": 62.44893276977539,
+  "ep_ret_norm": -8.866158796310424,
+  "term_frac": 0.027337075909201855,
+  "it_per_s": 1.0317838874756748,
+  "lr": 0.00019889940234767733
+}

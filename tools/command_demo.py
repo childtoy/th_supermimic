@@ -20,6 +20,12 @@ def main():
     p.add_argument('--output-dir', type=Path, required=True)
     p.add_argument('--switches', type=int, default=10)
     p.add_argument('--seed', type=int, default=42)
+    p.add_argument('--video-fps', type=int, default=25, choices=[1, 2, 5, 10, 25, 50])
+    p.add_argument('--video-width', type=int, default=960)
+    p.add_argument('--video-height', type=int, default=540)
+    p.add_argument('--skip-video', action='store_true', help='Save metrics and pose traces without rendering')
+    p.add_argument('--selection', choices=['phase', 'pose_velocity'], default='phase',
+                   help='Experimental pair ranking; phase retains the original behavior')
     p.add_argument('--source', help='Fixed single-switch source primitive')
     p.add_argument('--target', help='Fixed single-switch target primitive')
     p.add_argument('--cutback-seconds', type=float, help='Cut source this many seconds before its end; requires an exact bank edge')
@@ -109,7 +115,15 @@ def main():
                     candidates = [e for e in edges if e['source'] == active and e['target'] == target]
                     if not candidates:
                         raise ValueError(f'No edge {active} -> {target}')
-                    edge = fixed_edge if fixed else min(candidates, key=lambda e: abs((e['stop'] - 1) / 30 - phase))
+                    actual_state = unflatten_state(current['s'])
+                    def candidate_cost(candidate):
+                        if a.selection == 'phase':
+                            return abs((candidate['stop'] - 1) / 30 - phase)
+                        candidate_anchor = int(lib.clip_start[candidate['index']]) + round((candidate['stop']-1)*50/30)
+                        pose_error = (lib.q[candidate_anchor] - actual_state[4][0]).square().mean()
+                        velocity_error = (.1*(lib.qd[candidate_anchor] - actual_state[5][0])).square().mean()
+                        return float(pose_error + velocity_error) + .05*((candidate['stop']-1)/30-phase)**2
+                    edge = fixed_edge if fixed else min(candidates, key=candidate_cost)
                     index = edge['index']
                     lo, hi = int(lib.clip_start[index]), int(lib.clip_end[index]) + 1
                     # Anchor on the last source frame; the very next step enters the bridge.
@@ -131,6 +145,7 @@ def main():
                     events.append(dict(command=len(events) + 1, time_s=step / 50, source=active, target=target,
                                        source_phase_s=phase, selected_source_phase_s=(edge['stop'] - 1) / 30,
                                        phase_error_s=(edge['stop'] - 1) / 30 - phase,
+                                       selection_cost=candidate_cost(edge), selection=a.selection,
                                        edge=records[index]['name'], bridge_s=edge['bridge'] / 30,
                                        reference_joint_jump_rmse_rad=ref_jump, response_delay_s=0.0))
                     active = target
@@ -163,13 +178,16 @@ def main():
                       duration_s=(len(poses)-1)/50, normalized_step_reward=sum(rewards)/len(rewards)/mdp.max_step_reward,
                       mean_joint_rmse_rad=sum(errors)/len(errors), events=events,
                       checkpoint=str(a.checkpoint.resolve()), seed=a.seed, cutback_seconds=a.cutback_seconds,
-                      method='Immediate nearest-phase pair selection; planar reference alignment; persistent history and physical state. No blending or retraining.',
+                      selection=a.selection,
+                      method=f'Immediate {a.selection} pair selection; planar reference alignment; persistent history and physical state. No blending or retraining.',
                       limitation='Commands sampled during primitive playback, not during a bridge; no arbitrary rapid-command guarantee.')
         (a.output_dir / 'commands.json').write_text(json.dumps(result, indent=2) + '\n')
         np.savez_compressed(a.output_dir / 'rollout.npz', reference=np.array(refs), policy=np.array(poses), labels=np.array(labels), fps=50)
         print(json.dumps(result, indent=2), flush=True)
-        render_comparison(np.array(refs), np.array(poses), a.output_dir / 'commands.mp4', a.assets_dir / 'scene.xml',
-                          clip_name='Immediate reference switching', global_ghost=True, frame_labels=labels)
+        if not a.skip_video:
+            render_comparison(np.array(refs), np.array(poses), a.output_dir / 'commands.mp4', a.assets_dir / 'scene.xml',
+                              clip_name='Immediate reference switching', global_ghost=True, frame_labels=labels,
+                              fps=a.video_fps, width=a.video_width, height=a.video_height)
     finally:
         env.close()
 
